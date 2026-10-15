@@ -209,6 +209,7 @@ class TelegramBot:
 
     async def _command(self, text: str, uid: int, sess):
         cmd = text.split()[0].split("@")[0].lower()
+        log.info("perintah %s dari %s", cmd, uid)
         ch = sess.channel
         if cmd in ("/start", "/help"):
             await ch.send_text(HELP)
@@ -236,6 +237,7 @@ class TelegramBot:
         sess = self.mgr.get(f"tg{uid}")                # hanya sesi milik pengguna ini
         decision = {"a": "approve", "d": "deny", "s": "always"}.get(code, "deny")
         ok = sess.broker.resolve(aid, decision)
+        log.info("tombol izin %s -> %s (%s)", aid, decision, "diterima" if ok else "kedaluwarsa")
         label = {"approve": "✅ Disetujui", "always": "♾ Disetujui (selalu)", "deny": "❌ Ditolak"}[decision]
         try:
             await self.api("answerCallbackQuery", {"callback_query_id": cq["id"], "text": label if ok else "Permintaan sudah kedaluwarsa."})
