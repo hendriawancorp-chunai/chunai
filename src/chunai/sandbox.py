@@ -125,7 +125,7 @@ def run_python(code: str, workdir: Path, timeout: int = 60, mem_mb: int = 1536) 
     try:
         p = subprocess.run(["unshare", "-rn", "--", sys.executable, "-I", "-c", RUNNER], input=code, text=True,
                            capture_output=True, cwd=workdir, env=env, timeout=timeout,
-                           preexec_fn=_limits(mem_mb, timeout))
+                           preexec_fn=_limits(mem_mb, timeout * 2 + 5))   # CPU lebih longgar dari batas waktu dinding
         out, err, rc, to = p.stdout, p.stderr, p.returncode, False
     except subprocess.TimeoutExpired as e:
         out, err, rc, to = (e.stdout or b"").decode() if isinstance(e.stdout, bytes) else (e.stdout or ""), \
