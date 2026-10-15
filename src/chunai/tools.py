@@ -57,7 +57,23 @@ def build_server(workdir: Path, web=None):
             return _err(str(e))
 
     from .office.tools import office_tools
-    tools = [periksa_laporan, profil_data, buat_grafik, *office_tools(workdir)]
+    @tool("jalankan_python",
+          "Jalankan kode Python untuk analisis data di workspace (pandas, numpy, matplotlib tersedia). "
+          "Berjalan di sandbox: TANPA internet, tulis hanya di workspace, batas waktu 60 dtk & memori. "
+          "Gunakan print() untuk hasil; simpan keluaran ke output/ atau grafik/. Semua angka harus dihitung di sini.",
+          {"code": str})
+    async def jalankan_python(args):
+        import asyncio
+
+        from .sandbox import run_python
+        r = await asyncio.to_thread(run_python, args["code"], workdir)
+        text = (f"[exit={r.returncode}]" + ("" if r.ok else " GAGAL") + "\n" + (r.stdout or "") +
+                (f"\n--- STDERR ---\n{r.stderr}" if r.stderr else "") +
+                (f"\nBerkas baru/berubah: {', '.join(r.new_files)}" if r.new_files else ""))
+        return _ok(text) if r.ok else _err(text)
+
+    from .media_tools import media_tools
+    tools = [periksa_laporan, profil_data, buat_grafik, jalankan_python, *office_tools(workdir), *media_tools(workdir)]
     if web is not None:
         tools += _web_tools(web, _ok, _err)
     return create_sdk_mcp_server("chunai", tools=tools)

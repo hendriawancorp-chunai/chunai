@@ -25,7 +25,7 @@ SUBAGENTS = {
             "(3) Buat grafik dengan buat_grafik; judul = temuan. (4) Bedakan fakta dari interpretasi, "
             "dan sebut keterbatasan data (ukuran sampel, bias, data hilang)."
         ),
-        tools=["Read", "Bash", "Write", "Glob", "Grep",
-               "mcp__chunai__profil_data", "mcp__chunai__buat_grafik"],
+        tools=["Read", "Glob", "Grep", "mcp__chunai__profil_data", "mcp__chunai__buat_grafik",
+               "mcp__chunai__jalankan_python"],
     ),
 }

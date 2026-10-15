@@ -22,7 +22,9 @@ READ_ONLY_TOOLS = {
     "mcp__chunai__periksa_laporan", "mcp__chunai__profil_data",
     "mcp__chunai__buat_dokumen", "mcp__chunai__buat_presentasi",    # hanya menulis file baru di workspace/output/
     "mcp__chunai__periksa_dokumen", "mcp__chunai__pratinjau_file",   # tidak menimpa file
-    "mcp__chunai__buat_grafik",   # hanya menulis PNG baru ke workspace/grafik/ (tidak menimpa)
+    "mcp__chunai__buat_grafik",
+    "mcp__chunai__buat_gambar", "mcp__chunai__edit_gambar", "mcp__chunai__buat_video", "mcp__chunai__slide_ke_video",
+    "mcp__chunai__jalankan_python",   # sandbox: tanpa jaringan, tulis hanya di workspace (lihat sandbox.py)   # hanya menulis PNG baru ke workspace/grafik/ (tidak menimpa)
 }
 
 # Tool yang mengubah file / menjalankan perintah -> perlu izin.

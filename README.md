@@ -39,6 +39,12 @@ Tool `buat_dokumen` (DOCX gaya kajian + daftar pustaka APA) dan `buat_presentasi
 Tema khusus (warna, font, footer, logo): `data/themes/<nama>.json`, lihat `src/chunai/office/theme.py`.
 Contoh spesifikasi: `examples/`.
 
+## Analisis data & media
+- `jalankan_python`: kode analisis berjalan di sandbox (tanpa internet via `unshare -rn`, tulis/baca terbatas di workspace,
+  batas waktu/memori, environment bersih tanpa API key). Bila isolasi tidak tersedia, eksekusi ditolak (gagal-aman).
+- `buat_gambar` (HTML/CSS → PNG tanpa JavaScript & tanpa jaringan), `edit_gambar`, `buat_video` (adegan → MP4 via ffmpeg),
+  `slide_ke_video` (PPTX → MP4). Gambar fotorealistik AI memerlukan penyedia eksternal (belum dikonfigurasi).
+
 ## Web Agent (form, survei, kuesioner, portal)
 Alur: buka → baca → isi (DRAF) → review (nilai nyata dari halaman + screenshot) → **izin Anda** → kirim.
 
@@ -58,4 +64,4 @@ isi halaman dibungkus sebagai data + pemindai prompt-injection, klik & kirim **s
 (tidak bisa "selalu izinkan"). Tidak untuk menjawab ujian/penilaian yang dinilai atau diawasi.
 
 ## Roadmap
-0 Fondasi ✅ · 1 Riset ✅ + Analisis data ✅ · 3 Web Agent ✅ · 2 Dokumen/PPT · 4 Media · 5 Penguatan
+0 Fondasi ✅ · 1 Riset ✅ + Analisis ✅ · 2 Dokumen/PPT ✅ · 3 Web Agent ✅ · 4 Media ✅ · Web/Telegram ✅ · 5 Penguatan (berikutnya)
