@@ -20,4 +20,4 @@ pytest                            # jalankan tes
 - `agents.py`   – subagen: peneliti, analis
 
 ## Roadmap
-0 Fondasi ✅ · 1 Riset & analisis · 3 Web Agent · 2 Dokumen/PPT · 4 Media · 5 Penguatan
+0 Fondasi ✅ · 1 Riset ✅ + Analisis data ✅ · 3 Web Agent · 2 Dokumen/PPT · 4 Media · 5 Penguatan

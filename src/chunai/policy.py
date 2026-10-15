@@ -18,7 +18,8 @@ class Decision(str, Enum):
 READ_ONLY_TOOLS = {
     "Read", "Glob", "Grep", "WebSearch", "WebFetch",
     "TodoWrite", "Task", "Agent", "ListMcpResources", "ReadMcpResource", "ToolSearch",
-    "mcp__chunai__periksa_laporan",
+    "mcp__chunai__periksa_laporan", "mcp__chunai__profil_data",
+    "mcp__chunai__buat_grafik",   # hanya menulis PNG baru ke workspace/grafik/ (tidak menimpa)
 }
 
 # Tool yang mengubah file / menjalankan perintah -> perlu izin.

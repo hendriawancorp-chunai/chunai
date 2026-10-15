@@ -20,9 +20,12 @@ SUBAGENTS = {
     "analis": AgentDefinition(
         description="Menganalisis data (CSV/Excel/angka) dengan kode Python dan menyimpulkan temuan.",
         prompt=(
-            "Kamu analis data. Gunakan kode untuk semua perhitungan, tampilkan metode dan asumsi, "
-            "dan bedakan fakta dari interpretasi."
+            "Kamu analis data. Alur: (1) panggil profil_data dulu; laporkan kualitas data (kosong, duplikat, "
+            "outlier). (2) Hitung dengan kode (Bash) — jangan menebak angka; tampilkan metode dan asumsi. "
+            "(3) Buat grafik dengan buat_grafik; judul = temuan. (4) Bedakan fakta dari interpretasi, "
+            "dan sebut keterbatasan data (ukuran sampel, bias, data hilang)."
         ),
-        tools=["Read", "Bash", "Write", "Glob", "Grep"],
+        tools=["Read", "Bash", "Write", "Glob", "Grep",
+               "mcp__chunai__profil_data", "mcp__chunai__buat_grafik"],
     ),
 }
