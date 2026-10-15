@@ -4,7 +4,7 @@ version = "0.1.0"
 description = "ChunAI - AI Agent Assistant pribadi (riset, analisis, dokumen, media, kerja web dengan approval)"
 requires-python = ">=3.11"
 dependencies = ["claude-agent-sdk>=0.2.167", "pandas", "matplotlib", "openpyxl", "playwright", "python-docx", "python-pptx", "pillow",
-                "fastapi", "uvicorn", "websockets", "httpx", "python-multipart"]
+                "fastapi", "uvicorn", "websockets", "httpx", "python-multipart", "tzdata"]
 
 [project.optional-dependencies]
 dev = ["pytest", "pytest-asyncio"]

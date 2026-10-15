@@ -2,9 +2,10 @@
 from __future__ import annotations
 
 import json
-import time
 from pathlib import Path
 from typing import Any
+
+from .timeutil import now
 
 
 class AuditLog:
@@ -13,7 +14,7 @@ class AuditLog:
         self.path.parent.mkdir(parents=True, exist_ok=True)
 
     def record(self, event: str, **data: Any) -> None:
-        entry = {"ts": time.strftime("%Y-%m-%dT%H:%M:%S%z"), "event": event, **data}
+        entry = {"ts": now().isoformat(timespec="seconds"), "event": event, **data}
         with self.path.open("a", encoding="utf-8") as f:
             f.write(json.dumps(entry, ensure_ascii=False, default=str) + "\n")
 

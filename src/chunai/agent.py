@@ -14,6 +14,7 @@ from .approval import ApprovalGate, Reviewer
 from .audit import AuditLog
 from .browser import WebConfig, WebSession
 from .prompts import SYSTEM_PROMPT
+from .timeutil import describe
 from .tools import build_server
 
 
@@ -94,7 +95,7 @@ class ChunAI:
         """Kirim perintah, hasilkan potongan teks balasan."""
         assert self._client, "Gunakan 'async with ChunAI(...)'"
         self.audit.record("user_prompt", prompt=prompt)
-        await self._client.query(prompt)
+        await self._client.query(f"[Konteks waktu: {describe()}]\n{prompt}")
         async for msg in self._client.receive_response():
             if isinstance(msg, AssistantMessage):
                 for block in msg.content:

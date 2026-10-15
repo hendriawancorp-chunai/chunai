@@ -10,6 +10,7 @@ import httpx
 
 from ..approval import ApprovalRequest
 from ..policy import WEB_FINAL_TOOLS
+from ..timeutil import describe
 from .core import MAX_UPLOAD_BYTES, SessionManager, save_upload
 
 log = logging.getLogger("chunai.telegram")
@@ -220,7 +221,7 @@ class TelegramBot:
             await self.mgr.reset(f"tg{uid}")
             await ch_.send_text("Sesi baru dimulai.")
         elif cmd == "/status":
-            await ch.send_text(f"Sesi: {'sibuk' if sess.busy else 'siap'}\nMenunggu izin: {len(sess.broker.pending)}")
+            await ch.send_text(f"Sesi: {'sibuk' if sess.busy else 'siap'}\nMenunggu izin: {len(sess.broker.pending)}\nWaktu: {describe()}")
         else:
             await ch.send_text("Perintah tidak dikenal. Ketik /help.")
 
@@ -236,8 +237,18 @@ class TelegramBot:
         decision = {"a": "approve", "d": "deny", "s": "always"}.get(code, "deny")
         ok = sess.broker.resolve(aid, decision)
         label = {"approve": "✅ Disetujui", "always": "♾ Disetujui (selalu)", "deny": "❌ Ditolak"}[decision]
-        await self.api("answerCallbackQuery", {"callback_query_id": cq["id"], "text": label if ok else "Permintaan sudah kedaluwarsa."})
+        try:
+            await self.api("answerCallbackQuery", {"callback_query_id": cq["id"], "text": label if ok else "Permintaan sudah kedaluwarsa."})
+        except RuntimeError as e:          # tombol lama (mis. setelah restart): Telegram menolak jawaban; tidak fatal
+            log.info("callback lama diabaikan: %s", e)
         msg = cq.get("message") or {}
+        if not ok and msg:
+            try:
+                await self.api("editMessageReplyMarkup", {"chat_id": msg["chat"]["id"], "message_id": msg["message_id"],
+                                                          "reply_markup": {"inline_keyboard": []}})
+                await self.api("sendMessage", {"chat_id": msg["chat"]["id"], "text": "⌛ Permintaan izin itu sudah kedaluwarsa (ChunAI dimulai ulang). Kirim ulang perintahnya."})
+            except RuntimeError:
+                pass
         if ok and msg:
             await self.api("editMessageReplyMarkup", {"chat_id": msg["chat"]["id"], "message_id": msg["message_id"],
                                                       "reply_markup": {"inline_keyboard": []}})

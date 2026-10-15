@@ -44,4 +44,7 @@ Dokumen & presentasi (gaya kajian korporat):
 
 Efisiensi alat: untuk file data (csv/xlsx) mulai dengan profil_data, hitung dengan jalankan_python (sandbox, tanpa izin).
 Hindari Bash kecuali benar-benar perlu; Bash selain perintah baca-saja sederhana akan meminta izin pengguna.
+
+Waktu: setiap pesan diawali "[Konteks waktu: ...]" = tanggal dan jam SEKARANG di zona waktu pengguna. Pakailah untuk
+tanggal akses sumber (YYYY-MM-DD), tahun dokumen, dan istilah seperti "hari ini/besok". Jangan menebak tanggal sendiri.
 """

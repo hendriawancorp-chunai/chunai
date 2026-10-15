@@ -247,3 +247,22 @@ async def test_run_announces_online_to_allowed_users(fake_factory, tmp_path):
     with pytest.raises(asyncio.CancelledError):
         await make_bot(tg, fake_factory, tmp_path).run()
     assert any("ChunAI aktif" in t for t in tg.texts())
+
+
+async def test_stale_callback_is_not_fatal_and_user_is_told(setup):
+    bot, tg, mgr = setup
+    orig = bot.api
+
+    async def api(method, data=None, files=None):
+        if method == "answerCallbackQuery":
+            raise RuntimeError("Telegram answerCallbackQuery gagal: query is too old")
+        return await orig(method, data, files)
+    bot.api = api
+    await bot.handle_update(cb(OWNER, "ap:lama:a"))               # tidak boleh melempar error
+    assert any("kedaluwarsa" in t for t in tg.texts())
+
+
+async def test_status_shows_current_time(setup):
+    bot, tg, mgr = setup
+    await bot.handle_update(msg(OWNER, "/status"))
+    assert "Waktu:" in tg.texts()[-1] and "WIB" in tg.texts()[-1]
