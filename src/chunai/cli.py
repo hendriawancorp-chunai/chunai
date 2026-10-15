@@ -69,7 +69,10 @@ USAGE = """ChunAI
 
 
 async def run_telegram() -> None:
+    import logging
     import os
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(name)s %(levelname)s %(message)s")
+    logging.getLogger("httpx").setLevel(logging.WARNING)      # httpx mencetak URL berisi token pada level INFO
 
     from .interfaces.core import SessionManager, default_agent_factory
     from .interfaces.telegram import TelegramBot, allowed_ids_from_env
