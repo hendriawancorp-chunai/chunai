@@ -62,17 +62,29 @@ Skrip akan meminta kata sandi Ubuntu (untuk memasang paket), lalu memasang Pytho
 Di akhirnya muncul daftar pemeriksaan. Tanda ❌ pada "Otentikasi Claude" saat ini **normal**; kita atur di langkah berikut.
 
 ## Langkah 4. Hubungkan langganan Claude
+> **Aturan penting:** jalankan perintah **satu baris per kali**. Jangan menempel beberapa baris sekaligus; beberapa perintah
+> (seperti `read`) akan membaca baris berikutnya sebagai masukan dan hasilnya kacau.
+
 ```bash
-cd ~/chunai && source .venv/bin/activate
+cd ~/chunai
+source .venv/bin/activate
 chunai auth
 ```
 1. Salin tautan yang muncul, buka di browser Windows, login, setujui.
-2. Tempel kode yang diminta kembali ke Ubuntu.
-3. Layar menampilkan sebuah **token**. Salin.
-4. Buka berkas pengaturan: `nano .env`, cari baris `CLAUDE_CODE_OAUTH_TOKEN=`, tempel token di belakang `=`.
-   Simpan: `Ctrl+O`, `Enter`, lalu keluar `Ctrl+X`.
+2. Browser menampilkan sebuah **kode**. Tempel kode itu di Ubuntu lalu tekan Enter.
+3. Selesai. Token **disimpan otomatis** ke `.env`, layar dibersihkan, dan muncul `✅ Token tersimpan di .../.env`.
+   Anda **tidak perlu menyalin token sama sekali**.
 
-> Token ini seperti kata sandi. **Jangan dibagikan atau di-commit.** Berkas `.env` sudah diabaikan oleh git.
+Verifikasi (aman, hanya menampilkan panjang dan awalan):
+```bash
+chunai doctor --live
+```
+Harus muncul **"Uji nyata Claude - berhasil menjawab"**.
+
+> Bila `chunai auth` menulis bahwa token tidak terbaca otomatis, gunakan cara manual **satu baris** ini lalu tempel token
+> dan Enter: `read -rsp "Token: " T; echo; chunai savetoken "$T"; unset T`
+
+> Token ini seperti kata sandi. **Jangan dibagikan atau di-commit.**
 
 ## Langkah 5. Siapkan Telegram (opsional)
 1. Di Telegram, buka **@BotFather** → `/newbot` → catat **token** bot.

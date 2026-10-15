@@ -64,7 +64,7 @@ USAGE = """ChunAI
   chunai web [host] [port]     antarmuka Web (default 127.0.0.1:8787; token dari CHUNAI_WEB_TOKEN)
   chunai telegram              bot Telegram (CHUNAI_TELEGRAM_TOKEN, CHUNAI_TELEGRAM_USERS)
   chunai doctor                periksa semua prasyarat (Python, Claude, Chromium, LibreOffice, ...)
-  chunai auth                  buat token langganan Claude (disimpan di .env oleh Anda)
+  chunai auth                  login Claude; token disimpan otomatis ke .env
   chunai telegram-check        periksa token/ID/webhook Telegram (tanpa menjalankan bot)
   chunai serve                 Web + Telegram sekaligus
   chunai login <url>           login manual untuk Web Agent (komputer lokal)"""
@@ -145,16 +145,38 @@ async def run_serve() -> None:
 
 
 def run_auth() -> None:
-    import subprocess
-
-    from .doctor import claude_cli_path
+    from .auth import clear_screen, extract_token, run_setup_token
+    from .doctor import claude_cli_path, token_shape
+    from .envfile import env_path, save_env_var
     cli = claude_cli_path()
     if not cli:
         sys.exit("Claude CLI bawaan tidak ditemukan. Jalankan: pip install -e .")
-    print("Mengikuti login Claude (butuh langganan Pro/Max). Buka tautan yang muncul di browser Anda,\n"
-          "setujui, lalu tempel kode yang diminta. Salin TOKEN yang dicetak, lalu simpan di berkas .env sebagai:\n"
-          "    CLAUDE_CODE_OAUTH_TOKEN=token-anda\n")
-    sys.exit(subprocess.call([str(cli), "setup-token"]))
+    print("Login Claude (butuh langganan Pro/Max).\n"
+          "1) Buka tautan yang muncul di browser Anda dan setujui.\n"
+          "2) Tempel kode dari browser ke sini lalu Enter.\n"
+          "Token akan DISIMPAN OTOMATIS ke .env; Anda tidak perlu menyalinnya.\n")
+    code, raw = run_setup_token(cli)
+    token = extract_token(raw)
+    if token:
+        f = save_env_var("CLAUDE_CODE_OAUTH_TOKEN", token, env_path())
+        clear_screen()
+        print(f"✅ Token tersimpan di {f} ({token_shape(token)}).")
+        print("Layar dibersihkan agar token tidak tertinggal. Langkah berikut: chunai doctor --live")
+        sys.exit(0)
+    if code == 0:
+        print("\n⚠ Login selesai tetapi token tidak terbaca otomatis. Cara manual (SATU baris, lalu tempel token dan Enter):\n"
+              '  read -rsp "Token: " T; echo; chunai savetoken "$T"; unset T')
+    sys.exit(code or 1)
+
+
+def run_savetoken() -> None:
+    from .doctor import token_shape
+    from .envfile import env_path, save_env_var
+    tok = (sys.argv[2] if len(sys.argv) > 2 else "").strip().strip("\"'")
+    if not tok.startswith("sk-ant-"):
+        sys.exit("Token tidak dikenali (harus diawali sk-ant-).")
+    f = save_env_var("CLAUDE_CODE_OAUTH_TOKEN", tok, env_path())
+    print(f"✅ Tersimpan di {f} ({token_shape(tok)})")
 
 
 def run_doctor() -> None:
@@ -180,6 +202,8 @@ def main() -> None:
             run_doctor()
         if arg == "auth":
             run_auth()
+        if arg == "savetoken":
+            run_savetoken()
         if arg == "login" and len(sys.argv) >= 3:
             asyncio.run(login(sys.argv[2]))
             return

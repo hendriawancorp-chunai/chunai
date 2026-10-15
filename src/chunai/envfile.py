@@ -41,3 +41,29 @@ def load_env(path: str | Path | None = None) -> Path | None:
                 os.environ.setdefault(k, v)
             return f
     return None
+
+
+def env_path() -> Path:
+    """Berkas .env yang dipakai: CHUNAI_ENV_FILE, atau ./.env."""
+    return Path(os.environ["CHUNAI_ENV_FILE"]) if os.environ.get("CHUNAI_ENV_FILE") else Path.cwd() / ".env"
+
+
+def save_env_var(key: str, value: str, path: str | Path | None = None) -> Path:
+    """Ubah/tambah KEY=value di .env tanpa mengusik baris lain. Atomik, izin 600."""
+    f = Path(path) if path else env_path()
+    lines = f.read_text(encoding="utf-8").splitlines() if f.exists() else []
+    new, done = [], False
+    for line in lines:
+        bare = line.strip().removeprefix("export ").lstrip()
+        if not done and bare.startswith(f"{key}=") and not line.lstrip().startswith("#"):
+            new.append(f"{key}={value}"); done = True
+        else:
+            new.append(line)
+    if not done:
+        new.append(f"{key}={value}")
+    tmp = f.with_name(f.name + ".tmp")
+    tmp.write_text("\n".join(new) + "\n", encoding="utf-8")
+    if os.name == "posix":
+        tmp.chmod(0o600)
+    tmp.replace(f)
+    return f
