@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ChunAI</title>
+<style>
+:root{--bg:#f4f7fb;--card:#fff;--ink:#14284b;--mut:#6b7a90;--pri:#0070c0;--pri2:#00a0e3;--ok:#1a9c5a;--bad:#c0392b;--bd:#dbe4ef;--me:#e3f0fb}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#0e1626;--card:#16213a;--ink:#e6edf7;--mut:#93a3bb;--bd:#26344f;--me:#17304f}}
+:root[data-theme=dark]{--bg:#0e1626;--card:#16213a;--ink:#e6edf7;--mut:#93a3bb;--bd:#26344f;--me:#17304f}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,Segoe UI,Roboto,sans-serif;height:100dvh;display:flex;flex-direction:column}
+header{display:flex;align-items:center;gap:10px;padding:10px 16px;background:var(--card);border-bottom:1px solid var(--bd)}
+header h1{font-size:18px;margin:0;flex:1}.dot{width:10px;height:10px;border-radius:50%;background:var(--mut)}.dot.on{background:var(--ok)}.dot.busy{background:#e6a100;animation:p 1s infinite}
+@keyframes p{50%{opacity:.35}}
+button{font:inherit;cursor:pointer;border:1px solid var(--bd);background:var(--card);color:var(--ink);border-radius:10px;padding:8px 14px}
+button.pri{background:var(--pri);border-color:var(--pri);color:#fff}button.ok{background:var(--ok);border-color:var(--ok);color:#fff}button.bad{background:var(--bad);border-color:var(--bad);color:#fff}
+button:disabled{opacity:.5;cursor:default}
+#log{flex:1;overflow:auto;padding:16px;display:flex;flex-direction:column;gap:12px;scroll-behavior:smooth}
+.msg{max-width:min(760px,92%);padding:10px 14px;border-radius:14px;background:var(--card);border:1px solid var(--bd);white-space:pre-wrap;word-wrap:break-word}
+.msg.me{align-self:flex-end;background:var(--me)}.msg code{background:rgba(127,127,127,.18);padding:1px 5px;border-radius:5px}
+.msg a{color:var(--pri)}.note{align-self:center;color:var(--mut);font-size:14px}
+.appr{max-width:min(760px,92%);border:2px solid var(--pri2);background:var(--card);border-radius:14px;padding:14px}
+.appr h3{margin:0 0 8px;font-size:15px}.appr pre{max-height:260px;overflow:auto;background:rgba(127,127,127,.12);padding:10px;border-radius:8px;white-space:pre-wrap;font-size:13px;margin:8px 0}
+.appr img,.file img{max-width:100%;border-radius:8px;border:1px solid var(--bd)}.row{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}.appr.done{opacity:.6;border-color:var(--bd)}
+.file a{color:var(--pri)}.file{align-self:flex-start;background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:10px 14px;max-width:min(760px,92%)}
+footer{padding:10px 12px calc(10px + env(safe-area-inset-bottom));background:var(--card);border-top:1px solid var(--bd)}
+.comp{display:flex;gap:8px;align-items:flex-end;max-width:900px;margin:0 auto}
+textarea{flex:1;font:inherit;resize:none;max-height:160px;padding:10px 12px;border-radius:12px;border:1px solid var(--bd);background:var(--bg);color:var(--ink)}
+#login[hidden]{display:none}#login{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:20px}
+#login form{background:var(--card);border:1px solid var(--bd);border-radius:16px;padding:24px;width:min(420px,100%);display:flex;flex-direction:column;gap:12px}
+input{font:inherit;padding:10px 12px;border-radius:10px;border:1px solid var(--bd);background:var(--bg);color:var(--ink)}.err{color:var(--bad);min-height:1.2em;font-size:14px}
+</style>
+</head>
+<body>
+<div id="login"><form id="lf"><h1 style="margin:0">ChunAI</h1><div style="color:var(--mut)">Masukkan token akses.</div>
+<input id="tok" type="password" autocomplete="current-password" placeholder="Token akses" required><div class="err" id="lerr"></div><button class="pri">Masuk</button></form></div>
+<header><div class="dot" id="dot"></div><h1>ChunAI</h1><button id="reset" title="Mulai sesi baru">Baru</button></header>
+<div id="log" aria-live="polite"></div>
+<footer><div class="comp">
+<input type="file" id="fi" hidden><button id="att" title="Unggah file" aria-label="Unggah file">📎</button>
+<textarea id="in" rows="1" placeholder="Tulis perintah…"></textarea>
+<button class="bad" id="stop" hidden>Stop</button><button class="pri" id="send">Kirim</button></div></footer>
+<script>
+const $=id=>document.getElementById(id);let ws,token=sessionStorage.getItem('chunai_token')||'',busy=false,retry=0;
+const log=$('log');
+function esc(s){return s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
+function fmt(t){return esc(t).replace(/`([^`]+)`/g,'<code>$1</code>').replace(/\*\*([^*]+)\*\*/g,'<b>$1</b>')
+ .replace(/(https?:\/\/[^\s<)]+)/g,'<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>')}
+function add(cls,html){const d=document.createElement('div');d.className=cls;d.innerHTML=html;log.appendChild(d);log.scrollTop=log.scrollHeight;return d}
+function setBusy(b){busy=b;$('dot').className='dot '+(ws&&ws.readyState==1?(b?'busy':'on'):'');$('stop').hidden=!b;$('send').disabled=false}
+function connect(){
+  ws=new WebSocket((location.protocol=='https:'?'wss://':'ws://')+location.host+'/ws');
+  ws.onopen=()=>ws.send(JSON.stringify({type:'auth',token}));
+  ws.onmessage=e=>{const m=JSON.parse(e.data);
+    if(m.type=='ready'){retry=0;$('login').hidden=true;sessionStorage.setItem('chunai_token',token);setBusy(m.busy)}
+    else if(m.type=='error'){token='';sessionStorage.removeItem('chunai_token');$('login').hidden=false;$('lerr').textContent=m.text}
+    else if(m.type=='text')add('msg',fmt(m.text));
+    else if(m.type=='busy')setBusy(true);else if(m.type=='done')setBusy(false);
+    else if(m.type=='file'){add('file',(m.image?'<img src="'+m.url+'" alt="'+esc(m.name)+'"><br>':'')+'📄 <a href="'+m.url+'" download>'+esc(m.name)+'</a>')}
+    else if(m.type=='approval')approval(m)};
+  ws.onclose=()=>{setBusy(false);$('dot').className='dot';if(token&&retry<8)setTimeout(connect,Math.min(1000*++retry,8000))}}
+function approval(m){
+  const d=add('appr','<h3>🔒 Permintaan izin: '+esc(m.tool)+'</h3>'+(m.image?'<img src="'+m.image+'" alt="Tangkapan layar review">':'')+'<pre></pre><div class="row"></div>');
+  d.querySelector('pre').textContent=m.summary;const row=d.querySelector('.row');
+  const ans=(dec,label)=>{const b=document.createElement('button');b.textContent=label;b.className=dec=='approve'?'ok':dec=='deny'?'bad':'';
+    b.onclick=()=>{let note='';if(dec=='deny')note=prompt('Alasan/arahan (opsional):')||'';ws.send(JSON.stringify({type:'approval',id:m.id,decision:dec,note}));
+      d.classList.add('done');row.innerHTML='<i>'+(dec=='deny'?'❌ Ditolak':'✅ Disetujui')+'</i>'};row.appendChild(b)};
+  ans('approve','✅ Setuju');ans('deny','❌ Tolak');if(!m.final)ans('always','♾ Selalu (sesi ini)')}
+function send(){const t=$('in').value.trim();if(!t||!ws||ws.readyState!=1)return;add('msg me',fmt(t));ws.send(JSON.stringify({type:'message',text:t}));$('in').value='';$('in').style.height='auto'}
+$('send').onclick=send;$('stop').onclick=()=>ws.send(JSON.stringify({type:'stop'}));
+$('reset').onclick=()=>{if(confirm('Mulai sesi baru? Percakapan saat ini ditutup.')){log.innerHTML='';ws.send(JSON.stringify({type:'reset'}))}};
+$('in').addEventListener('keydown',e=>{if(e.key=='Enter'&&!e.shiftKey&&!e.isComposing){e.preventDefault();send()}});
+$('in').addEventListener('input',e=>{e.target.style.height='auto';e.target.style.height=Math.min(e.target.scrollHeight,160)+'px'});
+$('att').onclick=()=>$('fi').click();
+$('fi').onchange=async e=>{const f=e.target.files[0];if(!f)return;const fd=new FormData();fd.append('file',f);
+  try{const r=await fetch('/upload',{method:'POST',headers:{Authorization:'Bearer '+token},body:fd});const j=await r.json();
+    add('note',r.ok?'📎 File diterima: '+esc(j.path)+' — sebutkan apa yang ingin dilakukan.':'Gagal unggah: '+esc(j.detail||r.status))}catch(x){add('note','Gagal unggah.')}e.target.value=''};
+$('lf').onsubmit=e=>{e.preventDefault();token=$('tok').value.trim();$('lerr').textContent='';if(ws)ws.close();connect()};
+if(token){connect()}
+</script>
+</body>
+</html>

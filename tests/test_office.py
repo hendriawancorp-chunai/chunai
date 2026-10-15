@@ -61,3 +61,20 @@ def test_custom_theme_loads(tmp_path):
     assert t.primary == "AA0000" and t.font_slide == "Poppins"
     with pytest.raises(FileNotFoundError):
         load_theme("tidak-ada", tmp_path)
+
+
+def test_ringkasan_and_penutup_adapt_without_optional_parts(tmp_path):
+    spec = {"slides": [
+        {"kind": "ringkasan", "title": "R", "cards": [{"h": "A", "t": "x"}, {"h": "B", "t": "y"}]},
+        {"kind": "penutup", "title": "P", "bullets": ["satu", "dua"]}]}
+    out, _ = build_pptx(spec, tmp_path / "s.pptx", Theme(), Path("."))
+    prs = Presentation(str(out))
+    widest = max(sh.width for sh in prs.slides[0].shapes if sh.shape_type == 1)       # kartu melebar penuh
+    assert widest > 11_000_000
+    assert len(prs.slides) == 2
+
+
+def test_unknown_theme_error_lists_available(tmp_path):
+    (tmp_path / "asdp.json").write_text("{}")
+    with pytest.raises(FileNotFoundError, match="asdp"):
+        load_theme("biru", tmp_path)

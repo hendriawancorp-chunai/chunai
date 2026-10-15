@@ -19,6 +19,26 @@ pytest                            # jalankan tes
 - `agent.py`    – orkestrator (Claude Agent SDK)
 - `agents.py`   – subagen: peneliti, analis
 
+## Antarmuka: Web dan Telegram
+```bash
+export CHUNAI_WEB_TOKEN="isi-token-panjang-acak"       # wajib untuk Web (kalau kosong dibuat acak & dicetak)
+chunai web            # http://127.0.0.1:8787  (hanya localhost; untuk akses jarak jauh pakai HTTPS/tunnel)
+
+# Telegram: buat bot di @BotFather -> token. Kirim /id ke bot untuk tahu ID Anda.
+export CHUNAI_TELEGRAM_TOKEN="123456:ABC..."
+export CHUNAI_TELEGRAM_USERS="11111111"                # hanya ID ini yang dilayani (wajib)
+chunai telegram       # atau: chunai serve  (Web + Telegram sekaligus)
+```
+- Persetujuan: tombol ✅/❌ (Telegram) atau kartu (Web). Tidak dijawab dalam 10 menit = **ditolak**.
+- Aksi final web (klik/kirim) tidak punya tombol "selalu izinkan".
+- Kirim file (CSV/XLSX/PDF/…) lewat chat untuk dianalisis; hasil (docx/pptx/grafik) dikirim balik.
+- Perintah Telegram: `/status` `/stop` `/reset` `/id`. Hanya chat pribadi; grup diabaikan.
+
+## Dokumen & presentasi
+Tool `buat_dokumen` (DOCX gaya kajian + daftar pustaka APA) dan `buat_presentasi` (PPTX 16:9, chart editable).
+Tema khusus (warna, font, footer, logo): `data/themes/<nama>.json`, lihat `src/chunai/office/theme.py`.
+Contoh spesifikasi: `examples/`.
+
 ## Web Agent (form, survei, kuesioner, portal)
 Alur: buka → baca → isi (DRAF) → review (nilai nyata dari halaman + screenshot) → **izin Anda** → kirim.
 

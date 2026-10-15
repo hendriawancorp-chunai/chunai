@@ -85,6 +85,11 @@ class ChunAI:
         if self.web:
             await self.web.close()
 
+    async def interrupt(self):
+        """Hentikan giliran yang sedang berjalan."""
+        if self._client:
+            await self._client.interrupt()
+
     async def ask(self, prompt: str) -> AsyncIterator[str]:
         """Kirim perintah, hasilkan potongan teks balasan."""
         assert self._client, "Gunakan 'async with ChunAI(...)'"

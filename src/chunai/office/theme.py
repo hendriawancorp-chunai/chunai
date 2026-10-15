@@ -34,7 +34,8 @@ def load_theme(name: str | None = None, themes_dir: str | Path = "data/themes") 
         return Theme()
     f = Path(themes_dir) / f"{name}.json"
     if not f.exists():
-        raise FileNotFoundError(f"Tema '{name}' tidak ditemukan di {themes_dir}")
+        avail = ["korporat-biru (bawaan)"] + sorted(x.stem for x in Path(themes_dir).glob("*.json"))
+        raise FileNotFoundError(f"Tema '{name}' tidak ditemukan. Tersedia: {', '.join(avail)}. Kosongkan parameter theme untuk tema bawaan.")
     raw = json.loads(f.read_text(encoding="utf-8"))
     known = {x.name for x in fields(Theme)}
     return Theme(**{k: v for k, v in raw.items() if k in known}, name=name)

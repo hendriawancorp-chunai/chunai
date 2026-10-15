@@ -185,15 +185,17 @@ class Deck:
                 self.rect(s, x, 1.55, wk, 0.95, self.t.light)
                 self.text(s, x + 0.05, 1.58, wk - 0.1, 0.5, k["v"], size=24, bold=True, color=self.t.primary, minimum=14)
                 self.text(s, x + 0.05, 2.08, wk - 0.1, 0.4, k["l"], size=10.5, color="2B3A55", minimum=8)
-        y0, hh = 2.7, 4.3
+        y0 = 2.7 if kp else 1.6
+        hh = 6.95 - y0
         cards = d.get("cards", [])
+        cw = 6.55 if d.get("panel") else W - 1.0
         if cards:
-            ch = (hh - 0.15 * (len(cards) - 1)) / len(cards)
+            ch = min((hh - 0.15 * (len(cards) - 1)) / len(cards), 1.9 if not d.get("panel") else 99)
             for i, c in enumerate(cards):
                 y = y0 + i * (ch + 0.15)
-                self.rect(s, 0.5, y, 6.55, ch, "F2F6FB"); self.rect(s, 0.5, y, 0.06, ch, self.t.primary)
-                self.text(s, 0.7, y + 0.08, 6.2, 0.4, c["h"], size=16, bold=True, color=self.t.navy, minimum=12)
-                self.text(s, 0.7, y + 0.5, 6.2, ch - 0.55, c["t"], size=15, color=self.t.text, minimum=10)
+                self.rect(s, 0.5, y, cw, ch, "F2F6FB"); self.rect(s, 0.5, y, 0.06, ch, self.t.primary)
+                self.text(s, 0.7, y + 0.08, cw - 0.35, 0.4, c["h"], size=18, bold=True, color=self.t.navy, minimum=12)
+                self.text(s, 0.7, y + 0.5, cw - 0.35, ch - 0.55, c["t"], size=16, color=self.t.text, minimum=10)
         pn = d.get("panel")
         if pn:
             self.rect(s, 7.3, y0, 5.55, hh, self.t.primary)
@@ -389,8 +391,9 @@ class Deck:
 
     def penutup(self, d):
         s = self.new(d["title"], d.get("subtitle"))
-        self.rect(s, 0.5, 1.6, 7.9, 5.2, "F2F6FB"); self.rect(s, 0.5, 1.6, 0.06, 5.2, self.t.primary)
-        self.bullets(s, 0.8, 1.9, 7.4, 4.7, d["bullets"], size=22, gap=16)
+        pw = 7.9 if d.get("highlight") else W - 1.0
+        self.rect(s, 0.5, 1.6, pw, 5.2, "F2F6FB"); self.rect(s, 0.5, 1.6, 0.06, 5.2, self.t.primary)
+        self.bullets(s, 0.8, 1.9, pw - 0.5, 4.7, d["bullets"], size=24 if not d.get("highlight") else 22, gap=18)
         if d.get("highlight"):
             self.rect(s, 8.7, 1.6, 4.15, 5.2, self.t.primary)
             self.text(s, 8.95, 1.8, 3.7, 4.8, d["highlight"], size=22, bold=True, color="FFFFFF", anchor=MSO_ANCHOR.MIDDLE, minimum=11)

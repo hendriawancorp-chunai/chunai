@@ -3,7 +3,8 @@ name = "chunai"
 version = "0.1.0"
 description = "ChunAI - AI Agent Assistant pribadi (riset, analisis, dokumen, media, kerja web dengan approval)"
 requires-python = ">=3.11"
-dependencies = ["claude-agent-sdk>=0.2.167", "pandas", "matplotlib", "openpyxl"]
+dependencies = ["claude-agent-sdk>=0.2.167", "pandas", "matplotlib", "openpyxl", "playwright", "python-docx", "python-pptx", "pillow",
+                "fastapi", "uvicorn", "websockets", "httpx", "python-multipart"]
 
 [project.optional-dependencies]
 dev = ["pytest", "pytest-asyncio"]
@@ -14,6 +15,9 @@ chunai = "chunai.cli:main"
 [build-system]
 requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
+
+[tool.setuptools.package-data]
+chunai = ["interfaces/static/*"]
 
 [tool.setuptools.packages.find]
 where = ["src"]

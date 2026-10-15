@@ -59,10 +59,74 @@ async def login(url: str) -> None:
     print(f"Sesi tersimpan di {cfg.profile_dir}. Jalankan: CHUNAI_BROWSER=profile chunai")
 
 
+USAGE = """ChunAI
+  chunai                       chat di terminal
+  chunai web [host] [port]     antarmuka Web (default 127.0.0.1:8787; token dari CHUNAI_WEB_TOKEN)
+  chunai telegram              bot Telegram (CHUNAI_TELEGRAM_TOKEN, CHUNAI_TELEGRAM_USERS)
+  chunai serve                 Web + Telegram sekaligus
+  chunai login <url>           login manual untuk Web Agent (komputer lokal)"""
+
+
+async def run_telegram() -> None:
+    import os
+
+    from .interfaces.core import SessionManager, default_agent_factory
+    from .interfaces.telegram import TelegramBot, allowed_ids_from_env
+    token = os.environ.get("CHUNAI_TELEGRAM_TOKEN")
+    if not token:
+        sys.exit("CHUNAI_TELEGRAM_TOKEN belum diatur (buat bot lewat @BotFather).")
+    ids = allowed_ids_from_env()
+    if not ids:
+        sys.exit("CHUNAI_TELEGRAM_USERS belum diatur. Kirim /id ke bot untuk mengetahui ID Anda, lalu isi variabel ini.")
+    mgr = SessionManager(default_agent_factory())
+    bot = TelegramBot(token, ids, mgr)
+    try:
+        await bot.run()
+    finally:
+        await mgr.close_all()
+
+
+async def run_serve() -> None:
+    import os
+    import secrets
+
+    import uvicorn
+
+    from .interfaces.core import SessionManager, default_agent_factory
+    from .interfaces.telegram import TelegramBot, allowed_ids_from_env
+    from .interfaces.web import create_app
+    mgr = SessionManager(default_agent_factory())
+    token = os.environ.get("CHUNAI_WEB_TOKEN") or secrets.token_urlsafe(24)
+    app = create_app(mgr, token)
+    host, port = os.environ.get("CHUNAI_HOST", "127.0.0.1"), int(os.environ.get("CHUNAI_PORT", "8787"))
+    print(f"ChunAI Web: http://{host}:{port}  | token: {token}")
+    server = uvicorn.Server(uvicorn.Config(app, host=host, port=port, log_level="warning"))
+    tasks = [asyncio.create_task(server.serve())]
+    tg, ids = os.environ.get("CHUNAI_TELEGRAM_TOKEN"), allowed_ids_from_env()
+    if tg and ids:
+        tasks.append(asyncio.create_task(TelegramBot(tg, ids, mgr).run()))
+        print("Telegram aktif.")
+    await asyncio.gather(*tasks)
+
+
 def main() -> None:
     try:
-        if len(sys.argv) >= 3 and sys.argv[1] == "login":
+        arg = sys.argv[1] if len(sys.argv) > 1 else ""
+        if arg == "login" and len(sys.argv) >= 3:
             asyncio.run(login(sys.argv[2]))
+            return
+        if arg == "web":
+            from .interfaces.web import serve
+            serve(*(([sys.argv[2]] + ([int(sys.argv[3])] if len(sys.argv) > 3 else [])) if len(sys.argv) > 2 else []))
+            return
+        if arg == "telegram":
+            asyncio.run(run_telegram())
+            return
+        if arg == "serve":
+            asyncio.run(run_serve())
+            return
+        if arg in ("-h", "--help", "help"):
+            print(USAGE)
             return
         asyncio.run(run())
     except KeyboardInterrupt:
