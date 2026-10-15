@@ -113,7 +113,8 @@ schtasks /Create /SC ONLOGON /TN "ChunAI" /TR "powershell -WindowStyle Hidden -F
 | `scripts/install_wsl.sh: No such file or directory` | Folder tersalin bertingkat (mis. `~/chunai/chunai-main`) karena `cp -r` ke folder yang sudah ada. Hapus (`rm -rf ~/chunai`) lalu ulangi perintah salin di Langkah 2. Bila `scripts` memang tidak ada di ZIP, unduh ZIP terbaru dari GitHub. |
 | `wsl --install` tidak dikenal | Windows terlalu lama. Perbarui Windows (butuh 10 versi 2004+). |
 | Virtualisasi tidak aktif | Aktifkan *Virtualization / SVM* di BIOS komputer. |
-| ❌ Otentikasi Claude | Ulangi Langkah 4. Pastikan baris di `.env` tidak diawali `#` dan tanpa spasi. |
+| ❌ Otentikasi Claude | Ulangi Langkah 4. Pastikan baris di `.env` tidak diawali `#`, tanpa spasi, tanpa tanda kutip, dan token tidak terpotong. `chunai doctor` menampilkan panjang token dan peringatan bentuknya (tanpa membuka isinya). |
+| ❌ Uji nyata Claude | Baca alasan di barisnya (token ditolak, kuota habis, dll.). Diagnosis langsung: `set -a; . ./.env; set +a; .venv/lib/python3*/site-packages/claude_agent_sdk/_bundled/claude -p "Balas satu kata: siap"` |
 | ❌ Chromium | `python -m playwright install chromium` lalu `sudo $(which python) -m playwright install-deps chromium` |
 | Bot Telegram diam | Cek `data/logs/chunai.log`. Pastikan komputer tidak tidur dan terminal/skrip masih berjalan. |
 | Log: "Conflict ... other instance" | Ada dua ChunAI berjalan dengan token yang sama. Tutup yang lain. |
@@ -130,6 +131,12 @@ schtasks /Create /SC ONLOGON /TN "ChunAI" /TR "powershell -WindowStyle Hidden -F
 - Bila token bot atau Claude pernah terlihat orang lain: buat ulang (`/revoke` di BotFather; `chunai auth` lagi).
 
 ## Pembaruan
+**Bila memakai ZIP:** unduh ZIP terbaru, ekstrak, lalu jalankan lagi perintah salin yang sama di Langkah 2
+(`cp -r .../chunai-main/. ~/chunai/`). Berkas `.env` dan `.venv` Anda **tidak** tertimpa karena tidak ada di dalam ZIP.
+Tidak perlu memasang ulang.
+
+**Bila memakai git:** `git pull`.
+
 Ambil kode terbaru (ZIP baru atau `git pull`), lalu:
 ```bash
 cd ~/chunai && source .venv/bin/activate && pip install -e . && chunai doctor

@@ -41,6 +41,21 @@ def _playwright_chromium() -> str | None:
         return None
 
 
+def token_shape(tok: str) -> str:
+    """Deskripsi aman bentuk token: panjang dan awalan jenis publik ('sk-ant-oat'), TIDAK pernah isi rahasianya."""
+    head = tok[:10] if tok.startswith("sk-ant-") else "?"
+    warn = ""
+    if tok != tok.strip() or any(c.isspace() for c in tok):
+        warn = "; mengandung spasi/baris baru (salah tempel)"
+    elif tok.startswith(("\"", "'")) or tok.endswith(("\"", "'")):
+        warn = "; diapit tanda kutip (hapus kutip)"
+    elif not tok.startswith("sk-ant-"):
+        warn = "; awalan tidak dikenal (seharusnya diawali sk-ant-)"
+    elif len(tok) < 60:
+        warn = "; terlalu pendek (kemungkinan terpotong saat ditempel)"
+    return f"panjang {len(tok)}, awalan {head}{warn}"
+
+
 def run_checks() -> list[Check]:
     c: list[Check] = []
     v = sys.version_info
@@ -57,8 +72,8 @@ def run_checks() -> list[Check]:
     c.append(Check("Claude CLI bawaan SDK", cli is not None, str(cli) if cli else "tidak ditemukan; jalankan: pip install -e ."))
     has_oauth, has_key = bool(os.environ.get("CLAUDE_CODE_OAUTH_TOKEN")), bool(os.environ.get("ANTHROPIC_API_KEY"))
     has_login = (Path.home() / ".claude" / ".credentials.json").exists()
-    how = "token langganan (CLAUDE_CODE_OAUTH_TOKEN)" if has_oauth else "ANTHROPIC_API_KEY" if has_key else \
-        "login Claude di ~/.claude" if has_login else ""
+    how = f"token langganan ({token_shape(os.environ['CLAUDE_CODE_OAUTH_TOKEN'])})" if has_oauth else \
+        "ANTHROPIC_API_KEY" if has_key else "login Claude di ~/.claude" if has_login else ""
     c.append(Check("Otentikasi Claude", bool(how), how or "tidak terdeteksi. Jalankan: chunai auth (lalu simpan token di .env). Yakin sudah login? Uji nyata: chunai doctor --live"))
     if has_oauth and has_key:
         c.append(Check("Otentikasi ganda", False, "ANTHROPIC_API_KEY dan CLAUDE_CODE_OAUTH_TOKEN sama-sama ada; "
@@ -97,13 +112,51 @@ def render(checks: list[Check]) -> tuple[str, bool]:
     return "\n".join(lines), ok
 
 
-async def live_auth_check() -> Check:
-    """Uji nyata: satu pertanyaan kecil ke Claude (memakai sedikit kuota)."""
+def explain_error(text: str, status: int | None = None, kind: str | None = None) -> str:
+    """Terjemahkan galat Claude ke saran perbaikan dalam bahasa Indonesia."""
+    t = f"{text} {kind or ''}".lower()
+    if status == 401 or any(k in t for k in ("invalid api key", "authentication", "oauth", "unauthorized", "/login", "invalid x-api-key", "token")):
+        return "login/token ditolak. Buat token baru: chunai auth, tempel ke .env (CLAUDE_CODE_OAUTH_TOKEN=...), tanpa spasi/kutip"
+    if status == 402 or "credit" in t or "billing" in t:
+        return "saldo/kredit API tidak cukup. Periksa penagihan di console.anthropic.com"
+    if status == 429 or "rate" in t or "usage limit" in t or "limit reached" in t:
+        return "batas pemakaian langganan/API tercapai. Tunggu reset atau periksa paket Anda"
+    if status == 403 or "forbidden" in t or "permission" in t:
+        return "akses ditolak untuk akun ini (periksa paket Pro/Max aktif)"
+    if "overloaded" in t or (status or 0) >= 500:
+        return "layanan Claude sedang sibuk; coba lagi beberapa menit lagi"
+    return "alasan tidak dikenali; lihat pesan asli di atas"
+
+
+async def live_auth_check(timeout: float = 90.0) -> Check:
+    """Uji nyata: satu pertanyaan kecil ke Claude (memakai sedikit kuota). Menampilkan alasan kegagalan yang sebenarnya."""
+    import asyncio
+    from contextlib import aclosing
+
+    from claude_agent_sdk import AssistantMessage, ClaudeAgentOptions, ResultMessage, TextBlock, query
+
+    async def run() -> Check:
+        result = None
+        said, a_err = "", None
+        async with aclosing(query(prompt="Balas satu kata: siap", options=ClaudeAgentOptions(max_turns=1, allowed_tools=[]))) as gen:
+            async for m in gen:                      # habiskan aliran sampai selesai (tanpa return di tengah)
+                if isinstance(m, AssistantMessage):
+                    a_err = a_err or getattr(m, "error", None)
+                    said += "".join(b.text for b in m.content if isinstance(b, TextBlock))
+                elif isinstance(m, ResultMessage):
+                    result = m
+        if result is None:
+            return Check("Uji nyata Claude", False, "tidak ada hasil dari Claude CLI")
+        if not result.is_error and not a_err:
+            return Check("Uji nyata Claude", True, "berhasil menjawab")
+        raw = " | ".join(x for x in [(result.result or said or "").strip()[:200], "; ".join(result.errors or [])[:200],
+                                       f"HTTP {result.api_error_status}" if result.api_error_status else "", str(a_err or "")] if x)
+        return Check("Uji nyata Claude", False, f"{raw or 'ditolak tanpa pesan'}. Saran: {explain_error(raw, result.api_error_status, str(a_err or ''))}")
+
     try:
-        from claude_agent_sdk import ClaudeAgentOptions, ResultMessage, query
-        async for m in query(prompt="Balas satu kata: siap", options=ClaudeAgentOptions(max_turns=1, allowed_tools=[])):
-            if isinstance(m, ResultMessage):
-                return Check("Uji nyata Claude", not m.is_error, "berhasil menjawab" if not m.is_error else "Claude menolak/gagal; periksa login & kuota")
-        return Check("Uji nyata Claude", False, "tidak ada hasil")
+        return await asyncio.wait_for(run(), timeout)
+    except asyncio.TimeoutError:
+        return Check("Uji nyata Claude", False, f"tidak ada respons dalam {int(timeout)} detik. Saran: periksa internet/firewall ke api.anthropic.com "
+                     "dan apakah token valid (buat ulang: chunai auth)")
     except Exception as e:
-        return Check("Uji nyata Claude", False, f"{type(e).__name__}: {str(e)[:120]}")
+        return Check("Uji nyata Claude", False, f"{type(e).__name__}: {str(e)[:150]}. Saran: periksa 'chunai doctor' dan koneksi internet")

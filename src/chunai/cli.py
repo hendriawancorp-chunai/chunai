@@ -162,7 +162,10 @@ def run_doctor() -> None:
     checks = run_checks()
     if "--live" in sys.argv:
         live = asyncio.run(live_auth_check())
-        checks = [c for c in checks if c.name != "Otentikasi Claude"] + [live]   # hasil nyata menggantikan dugaan statis
+        static_auth = next((c for c in checks if c.name == "Otentikasi Claude"), None)
+        if live.ok and static_auth and not static_auth.ok:                       # hasil nyata mengalahkan dugaan statis
+            checks = [c for c in checks if c is not static_auth]
+        checks = checks + [live]
     text, ok = render(checks)
     print(text)
     sys.exit(0 if ok else 1)
