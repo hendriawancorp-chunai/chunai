@@ -1,0 +1,23 @@
+[project]
+name = "chunai"
+version = "0.1.0"
+description = "ChunAI - AI Agent Assistant pribadi (riset, analisis, dokumen, media, kerja web dengan approval)"
+requires-python = ">=3.11"
+dependencies = ["claude-agent-sdk>=0.2.167"]
+
+[project.optional-dependencies]
+dev = ["pytest", "pytest-asyncio"]
+
+[project.scripts]
+chunai = "chunai.cli:main"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
