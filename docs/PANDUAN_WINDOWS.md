@@ -36,6 +36,17 @@ Repo bersifat private, jadi pilih salah satu:
    ```bash
    cp -r /mnt/c/Users/NAMA/Downloads/chunai-main ~/chunai
    ```
+3. **Periksa hasilnya (penting):**
+   ```bash
+   ls ~/chunai
+   ```
+   Harus tampil `scripts  src  docs  pyproject.toml ...`. Jika yang tampil hanya **satu folder** (misal `chunai-main`), berarti
+   hasil ekstrak Windows bertingkat dua. Perbaiki dengan:
+   ```bash
+   rm -rf ~/chunai
+   cp -r /mnt/c/Users/NAMA/Downloads/chunai-main/chunai-main ~/chunai
+   ls ~/chunai
+   ```
 
 **Opsi B (git):** buat *Personal Access Token* di GitHub (Settings → Developer settings → Fine-grained tokens, izin
 *Contents: Read-only* untuk repo ini), lalu di Ubuntu:
@@ -102,6 +113,7 @@ schtasks /Create /SC ONLOGON /TN "ChunAI" /TR "powershell -WindowStyle Hidden -F
 
 | Gejala | Penyebab dan solusi |
 |---|---|
+| `scripts/install_wsl.sh: No such file or directory` | Folder tersalin bertingkat atau ZIP terlalu lama. Jalankan `ls ~/chunai`; bila hanya ada satu folder, ulangi Langkah 2 dengan folder dalamnya. Bila `scripts` memang tidak ada, unduh ZIP terbaru dari GitHub. |
 | `wsl --install` tidak dikenal | Windows terlalu lama. Perbarui Windows (butuh 10 versi 2004+). |
 | Virtualisasi tidak aktif | Aktifkan *Virtualization / SVM* di BIOS komputer. |
 | ❌ Otentikasi Claude | Ulangi Langkah 4. Pastikan baris di `.env` tidak diawali `#` dan tanpa spasi. |
