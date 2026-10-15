@@ -240,3 +240,10 @@ async def test_unauthorized_token_gives_clear_error_without_leak(fake_factory, t
     with pytest.raises(RuntimeError) as e:
         await make_bot(RichFakeTG(fail="unauthorized"), fake_factory, tmp_path).run()
     assert "SECRET-TOKEN" not in str(e.value)
+
+
+async def test_run_announces_online_to_allowed_users(fake_factory, tmp_path):
+    tg = RichFakeTG()
+    with pytest.raises(asyncio.CancelledError):
+        await make_bot(tg, fake_factory, tmp_path).run()
+    assert any("ChunAI aktif" in t for t in tg.texts())

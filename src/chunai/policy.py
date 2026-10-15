@@ -5,6 +5,7 @@ Prinsip: baca bebas, tulis harus izin. Default untuk tool tak dikenal = MINTA IZ
 from __future__ import annotations
 
 import re
+import shlex
 from enum import Enum
 from urllib.parse import urlparse
 
@@ -53,6 +54,37 @@ def host_allowed(url: str, allowed: set[str] | None) -> bool:
     return any(host == d or host.endswith("." + d) for d in (x.lower().lstrip(".") for x in allowed))
 
 
+_SAFE_CMDS = {"ls", "head", "tail", "wc", "cat", "pwd", "file", "stat", "du"}
+_SAFE_FLAG = re.compile(r"^-[A-Za-z0-9]+$|^-n$|^--(lines|bytes|human-readable)=?\d*$")
+_BAD_CHARS = re.compile(r"[;`$<>(){}\\\n\r~&|]")
+
+
+def is_safe_readonly_bash(command: str) -> bool:
+    """True hanya untuk perintah baca-saja sederhana pada path RELATIF (di workspace):
+    ls/head/tail/wc/cat/pwd/file/stat/du, digabung dengan && atau |. Tanpa pengalihan, subshell, variabel, path absolut atau '..'."""
+    command = (command or "").strip()
+    if not command or len(command) > 400:
+        return False
+    for seg in re.split(r"&&|\|", command):
+        if _BAD_CHARS.search(seg):
+            return False
+        try:
+            toks = shlex.split(seg)
+        except ValueError:
+            return False
+        if not toks or toks[0] not in _SAFE_CMDS:
+            return False
+        for t in toks[1:]:
+            if t.startswith("-"):
+                if not _SAFE_FLAG.match(t) or t in ("-f", "-F", "--follow"):
+                    return False
+            elif t.isdigit():
+                continue
+            elif t.startswith("/") or ".." in t.split("/") or t.startswith("~"):
+                return False
+    return True
+
+
 def classify(tool_name: str, tool_input: dict | None = None, allowed_domains: set[str] | None = None) -> Decision:
     tool_input = tool_input or {}
     if tool_name == WEB_OPEN_TOOL:
@@ -63,6 +95,8 @@ def classify(tool_name: str, tool_input: dict | None = None, allowed_domains: se
         return Decision.ASK
     if tool_name == "Bash" and _DENY_BASH.search(str(tool_input.get("command", ""))):
         return Decision.DENY
+    if tool_name == "Bash" and is_safe_readonly_bash(str(tool_input.get("command", ""))):
+        return Decision.AUTO
     if tool_name in READ_ONLY_TOOLS:
         return Decision.AUTO
     if tool_name in WRITE_TOOLS:

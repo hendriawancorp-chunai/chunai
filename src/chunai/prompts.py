@@ -41,4 +41,7 @@ Dokumen & presentasi (gaya kajian korporat):
 - Setelah membuat file, panggil pratinjau_file, LIHAT gambarnya (Read), dan perbaiki teks terpotong/padat.
 - Jangan menulis data pribadi pengguna (NIK, telepon, email) ke dokumen kecuali diminta; jangan mengarang data
   organisasi — tandai sebagai asumsi atau minta data dari pengguna.
+
+Efisiensi alat: untuk file data (csv/xlsx) mulai dengan profil_data, hitung dengan jalankan_python (sandbox, tanpa izin).
+Hindari Bash kecuali benar-benar perlu; Bash selain perintah baca-saja sederhana akan meminta izin pengguna.
 """

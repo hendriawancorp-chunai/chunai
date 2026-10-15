@@ -11,7 +11,7 @@ def test_policy_read_auto():
 
 def test_policy_write_ask():
     assert classify("Write") is Decision.ASK
-    assert classify("Bash", {"command": "ls"}) is Decision.ASK
+    assert classify("Bash", {"command": "python x.py"}) is Decision.ASK
 
 
 def test_policy_unknown_fail_safe():
@@ -74,3 +74,21 @@ async def test_audit_trail(tmp_path):
 def test_chunai_tool_and_toolsearch_auto():
     assert classify("mcp__chunai__periksa_laporan") is Decision.AUTO
     assert classify("ToolSearch") is Decision.AUTO
+
+
+def test_safe_readonly_bash_auto():
+    from chunai.policy import is_safe_readonly_bash
+    ok = ["ls -la masukan && head -5 masukan/penjualan.csv && wc -l masukan/penjualan.csv", "ls | wc -l",
+          "cat output/a.md", "tail -n 20 masukan/x.csv", "pwd", "ls masukan/*.csv"]
+    for c in ok:
+        assert is_safe_readonly_bash(c), c
+        assert classify("Bash", {"command": c}) is Decision.AUTO
+
+
+def test_unsafe_bash_still_asks_or_denied():
+    bad = ["cat /etc/passwd", "cat ../x", "ls; rm x", "head $(whoami)", "ls > a", "tail -f a", "cat a | sh",
+           "ls && curl http://x", "cat ~/.ssh/id_rsa", "ls `id`", "head -n 5 a >> b", "python x.py", "ls -la /", "rm -rf x",
+           "cat a || echo", "head -c 1 a\nrm b", ""]
+    for c in bad:
+        assert classify("Bash", {"command": c}) is not Decision.AUTO, c
+    assert classify("Bash", {"command": "rm -rf /"}) is Decision.DENY

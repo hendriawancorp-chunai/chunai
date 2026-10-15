@@ -118,6 +118,8 @@ class TelegramBot:
     async def run(self):
         info = await self.prepare()
         log.info("ChunAI Telegram berjalan sebagai @%s; pengguna diizinkan: %s", info["username"], sorted(self.allowed))
+        await self.announce("✅ ChunAI aktif. Jika sebelumnya ada tugas atau tombol izin yang menggantung, "
+                            "itu sudah dibatalkan karena ChunAI dimulai ulang; kirim ulang perintahnya.")
         backoff = 1
         while not self._stop:
             try:
@@ -140,6 +142,13 @@ class TelegramBot:
                     log.warning("polling gagal: %s", msg.replace(self.token, "***"))
                 await asyncio.sleep(backoff)
                 backoff = min(backoff * 2, 30)
+
+    async def announce(self, text: str):
+        for uid in sorted(self.allowed):
+            try:
+                await self.api("sendMessage", {"chat_id": uid, "text": text})
+            except Exception as e:           # pengguna belum pernah /start ke bot, dsb.
+                log.info("pengumuman ke %s tidak terkirim: %s", uid, str(e).replace(self.token, "***"))
 
     def stop(self):
         self._stop = True
