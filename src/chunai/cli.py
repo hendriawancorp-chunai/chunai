@@ -63,6 +63,8 @@ USAGE = """ChunAI
   chunai                       chat di terminal
   chunai web [host] [port]     antarmuka Web (default 127.0.0.1:8787; token dari CHUNAI_WEB_TOKEN)
   chunai telegram              bot Telegram (CHUNAI_TELEGRAM_TOKEN, CHUNAI_TELEGRAM_USERS)
+  chunai doctor                periksa semua prasyarat (Python, Claude, Chromium, LibreOffice, ...)
+  chunai auth                  buat token langganan Claude (disimpan di .env oleh Anda)
   chunai telegram-check        periksa token/ID/webhook Telegram (tanpa menjalankan bot)
   chunai serve                 Web + Telegram sekaligus
   chunai login <url>           login manual untuk Web Agent (komputer lokal)"""
@@ -117,8 +119,10 @@ async def run_telegram_check() -> None:
 
 
 async def run_serve() -> None:
+    import logging
     import os
-    import secrets
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(name)s %(levelname)s %(message)s")
+    logging.getLogger("httpx").setLevel(logging.WARNING)
 
     import uvicorn
 
@@ -126,10 +130,11 @@ async def run_serve() -> None:
     from .interfaces.telegram import TelegramBot, allowed_ids_from_env
     from .interfaces.web import create_app
     mgr = SessionManager(default_agent_factory())
-    token = os.environ.get("CHUNAI_WEB_TOKEN") or secrets.token_urlsafe(24)
+    from .interfaces.web import resolve_token
+    token, generated = resolve_token()
     app = create_app(mgr, token)
     host, port = os.environ.get("CHUNAI_HOST", "127.0.0.1"), int(os.environ.get("CHUNAI_PORT", "8787"))
-    print(f"ChunAI Web: http://{host}:{port}  | token: {token}")
+    print(f"ChunAI Web: http://{host}:{port}  | token: {token if generated else '(dari CHUNAI_WEB_TOKEN di .env)'}", flush=True)
     server = uvicorn.Server(uvicorn.Config(app, host=host, port=port, log_level="warning"))
     tasks = [asyncio.create_task(server.serve())]
     tg, ids = os.environ.get("CHUNAI_TELEGRAM_TOKEN"), allowed_ids_from_env()
@@ -139,9 +144,39 @@ async def run_serve() -> None:
     await asyncio.gather(*tasks)
 
 
+def run_auth() -> None:
+    import subprocess
+
+    from .doctor import claude_cli_path
+    cli = claude_cli_path()
+    if not cli:
+        sys.exit("Claude CLI bawaan tidak ditemukan. Jalankan: pip install -e .")
+    print("Mengikuti login Claude (butuh langganan Pro/Max). Buka tautan yang muncul di browser Anda,\n"
+          "setujui, lalu tempel kode yang diminta. Salin TOKEN yang dicetak, lalu simpan di berkas .env sebagai:\n"
+          "    CLAUDE_CODE_OAUTH_TOKEN=token-anda\n")
+    sys.exit(subprocess.call([str(cli), "setup-token"]))
+
+
+def run_doctor() -> None:
+    from .doctor import live_auth_check, render, run_checks
+    checks = run_checks()
+    if "--live" in sys.argv:
+        live = asyncio.run(live_auth_check())
+        checks = [c for c in checks if c.name != "Otentikasi Claude"] + [live]   # hasil nyata menggantikan dugaan statis
+    text, ok = render(checks)
+    print(text)
+    sys.exit(0 if ok else 1)
+
+
 def main() -> None:
+    from .envfile import load_env
+    load_env()
     try:
         arg = sys.argv[1] if len(sys.argv) > 1 else ""
+        if arg == "doctor":
+            run_doctor()
+        if arg == "auth":
+            run_auth()
         if arg == "login" and len(sys.argv) >= 3:
             asyncio.run(login(sys.argv[2]))
             return

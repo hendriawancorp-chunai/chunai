@@ -9,6 +9,7 @@ from pathlib import Path
 from claude_agent_sdk import tool
 
 from .. import data as D
+from ..resources import run_heavy
 from .deckbuild import build_pptx
 from .docbuild import build_docx
 from .doccheck import lint_doc_spec
@@ -64,7 +65,7 @@ def office_tools(workdir: Path, themes_dir: str = "data/themes"):
             path.with_suffix(".spec.json").write_text(json.dumps(spec, ensure_ascii=False, indent=1), encoding="utf-8")
             msgs = [f"Dokumen tersimpan: {path.relative_to(workdir)}"]
             if args.get("pdf"):
-                msgs.append(f"PDF: {to_pdf(path, out).relative_to(workdir)}")
+                msgs.append(f"PDF: {(await run_heavy(to_pdf, path, out)).relative_to(workdir)}")
             issues = lint_doc_spec(spec)
             msgs.append("Pemeriksaan sitasi: LOLOS" if not issues else "Pemeriksaan sitasi PERLU PERBAIKAN:\n- " + "\n- ".join(issues))
             return ok("\n".join(msgs))
@@ -103,11 +104,11 @@ def office_tools(workdir: Path, themes_dir: str = "data/themes"):
             src = D.resolve_in(workdir, args["path"])
             if not src.is_file():
                 return err(f"File tidak ditemukan: {args['path']}")
-            pdf = src if src.suffix.lower() == ".pdf" else to_pdf(src, workdir / "pratinjau")
-            pngs = to_pngs(pdf, workdir / "pratinjau", dpi=int(args.get("dpi") or 60))
+            pdf = src if src.suffix.lower() == ".pdf" else await run_heavy(to_pdf, src, workdir / "pratinjau")
+            pngs = await run_heavy(to_pngs, pdf, workdir / "pratinjau", dpi=int(args.get("dpi") or 60))
             msg = "Gambar pratinjau:\n" + "\n".join(str(p.relative_to(workdir)) for p in pngs)
             if len(pngs) > 1:
-                sheet = contact_sheet(pngs, workdir / "pratinjau" / f"{src.stem}_semua.png")
+                sheet = await run_heavy(contact_sheet, pngs, workdir / "pratinjau" / f"{src.stem}_semua.png")
                 msg = f"LIHAT INI DULU (semua halaman/slide dalam satu gambar): {sheet.relative_to(workdir)}\n" + msg
             return ok(msg)
         except Exception as e:

@@ -7,6 +7,7 @@ from pathlib import Path
 from claude_agent_sdk import tool
 
 from . import media as M
+from .resources import heavy, run_heavy
 
 
 def media_tools(workdir: Path):
@@ -25,7 +26,8 @@ def media_tools(workdir: Path):
     async def buat_gambar(args):
         try:
             path = M.unique(out / f"{M.safe_name(args.get('name'), 'gambar')}.png")
-            blocked = await M.render_html(args["html"], path, workdir, int(args.get("width") or 1080), int(args.get("height") or 1080))
+            async with heavy():
+                blocked = await M.render_html(args["html"], path, workdir, int(args.get("width") or 1080), int(args.get("height") or 1080))
             msg = f"Gambar tersimpan: {rel(path)}"
             if blocked:
                 msg += "\nPermintaan eksternal DIBLOKIR (tidak dimuat): " + ", ".join(blocked[:5])
@@ -61,7 +63,8 @@ def media_tools(workdir: Path):
             for i, sc in enumerate(args["scenes"]):
                 if sc.get("html"):
                     fp = tmp / f"f{i}.png"
-                    await M.render_html(sc["html"], fp, workdir, w, h)
+                    async with heavy():
+                        await M.render_html(sc["html"], fp, workdir, w, h)
                 elif sc.get("image"):
                     fp = M.inside(workdir, sc["image"])
                 else:
@@ -69,7 +72,7 @@ def media_tools(workdir: Path):
                 frames.append(fp); durs.append(float(sc.get("durasi", 4)))
             path = M.unique(out / f"{M.safe_name(args.get('name'), 'video')}.mp4")
             audio = M.inside(workdir, args["audio"]) if args.get("audio") else None
-            await asyncio.to_thread(M.make_video, frames, durs, path, (w, h), int(args.get("fps") or 24), 0.6, audio)
+            await run_heavy(M.make_video, frames, durs, path, (w, h), int(args.get("fps") or 24), 0.6, audio)
             info = M.probe(path)
             return ok(f"Video tersimpan: {rel(path)} ({info.get('width')}x{info.get('height')}, {float(info.get('duration', 0)):.1f} dtk)")
         except Exception as e:
@@ -81,9 +84,9 @@ def media_tools(workdir: Path):
         try:
             src = M.inside(workdir, args["path"])
             d = float(args.get("detik_per_slide") or 6)
-            frames = await asyncio.to_thread(M.deck_to_frames, src, workdir / ".tmp" / "deck")
+            frames = await run_heavy(M.deck_to_frames, src, workdir / ".tmp" / "deck")
             path = M.unique(out / f"{M.safe_name(args.get('name'), src.stem + '_video')}.mp4")
-            await asyncio.to_thread(M.make_video, frames, [d] * len(frames), path, (1280, 720), 24)
+            await run_heavy(M.make_video, frames, [d] * len(frames), path, (1280, 720), 24)
             info = M.probe(path)
             return ok(f"Video tersimpan: {rel(path)} ({len(frames)} slide, {float(info.get('duration', 0)):.1f} dtk)")
         except Exception as e:

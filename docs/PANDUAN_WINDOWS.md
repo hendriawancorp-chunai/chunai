@@ -1,0 +1,132 @@
+# Panduan Menjalankan ChunAI di Windows (WSL2)
+
+Panduan ini untuk menjalankan ChunAI di **komputer Windows pribadi** memakai **langganan Claude** Anda. Tidak ada biaya server.
+
+**Kenapa WSL2?** WSL2 adalah "Ubuntu di dalam Windows". Semua fitur ChunAI sudah diuji di Linux, termasuk sandbox analisis yang
+memutus akses internet saat menjalankan kode. Di Windows biasa sandbox itu tidak tersedia.
+
+**Yang dibutuhkan**
+- Windows 10 (versi 2004 / build 19041 atau lebih baru) atau Windows 11
+- RAM 8 GB disarankan (minimum 4 GB)
+- Langganan Claude Pro atau Max
+- Akun Telegram (bila ingin memakai bot) dan koneksi internet
+
+> Bot hanya aktif **selama komputer menyala dan tidak tidur**. Untuk aktif 24 jam, lihat bagian "VPS" di akhir.
+
+---
+
+## Langkah 1. Aktifkan WSL2 dan Ubuntu (sekali saja)
+1. Klik kanan tombol Start, pilih **Terminal (Admin)** atau **Windows PowerShell (Admin)**.
+2. Jalankan:
+   ```powershell
+   wsl --install -d Ubuntu
+   ```
+3. **Restart komputer** bila diminta. Setelah menyala, jendela Ubuntu terbuka sendiri dan meminta **username** dan **kata sandi**
+   (bebas, ingat kata sandinya; saat mengetik sandi layar tidak menampilkan apa pun, itu normal).
+4. Pastikan versi 2. Di PowerShell biasa: `wsl -l -v` → kolom VERSION harus `2`.
+   Bila `1`: `wsl --set-version Ubuntu 2`.
+
+## Langkah 2. Ambil kode ChunAI ke dalam Ubuntu
+Repo bersifat private, jadi pilih salah satu:
+
+**Opsi A (paling mudah, tanpa token):**
+1. Di browser, buka repo GitHub Anda → **Code → Download ZIP**, lalu ekstrak (misal ke `Downloads`).
+2. Buka **Ubuntu** dari menu Start, lalu salin folder ke rumah Ubuntu (ganti `NAMA` dengan nama pengguna Windows Anda dan
+   `chunai-main` dengan nama folder hasil ekstrak):
+   ```bash
+   cp -r /mnt/c/Users/NAMA/Downloads/chunai-main ~/chunai
+   ```
+
+**Opsi B (git):** buat *Personal Access Token* di GitHub (Settings → Developer settings → Fine-grained tokens, izin
+*Contents: Read-only* untuk repo ini), lalu di Ubuntu:
+```bash
+git clone https://github.com/hendriawancorp-chunai/chunai.git ~/chunai
+```
+(username = nama GitHub Anda; password = token tadi.)
+
+## Langkah 3. Pasang (sekitar 5–15 menit)
+Di jendela Ubuntu:
+```bash
+cd ~/chunai
+bash scripts/install_wsl.sh
+```
+Skrip akan meminta kata sandi Ubuntu (untuk memasang paket), lalu memasang Python, LibreOffice, ffmpeg, Chromium, dan ChunAI.
+Di akhirnya muncul daftar pemeriksaan. Tanda ❌ pada "Otentikasi Claude" saat ini **normal**; kita atur di langkah berikut.
+
+## Langkah 4. Hubungkan langganan Claude
+```bash
+cd ~/chunai && source .venv/bin/activate
+chunai auth
+```
+1. Salin tautan yang muncul, buka di browser Windows, login, setujui.
+2. Tempel kode yang diminta kembali ke Ubuntu.
+3. Layar menampilkan sebuah **token**. Salin.
+4. Buka berkas pengaturan: `nano .env`, cari baris `CLAUDE_CODE_OAUTH_TOKEN=`, tempel token di belakang `=`.
+   Simpan: `Ctrl+O`, `Enter`, lalu keluar `Ctrl+X`.
+
+> Token ini seperti kata sandi. **Jangan dibagikan atau di-commit.** Berkas `.env` sudah diabaikan oleh git.
+
+## Langkah 5. Siapkan Telegram (opsional)
+1. Di Telegram, buka **@BotFather** → `/newbot` → catat **token** bot.
+2. Buka **@userinfobot** → catat **ID angka** Anda.
+3. Di `nano .env` isi `CHUNAI_TELEGRAM_TOKEN=` dan `CHUNAI_TELEGRAM_USERS=` (hanya ID ini yang akan dilayani bot).
+
+## Langkah 6. Periksa
+```bash
+chunai doctor --live
+```
+Harus muncul **"Uji nyata Claude - berhasil menjawab"** dan **"SIAP dipakai"**. Jika ada ❌, ikuti saran di barisnya.
+Opsional: `chunai telegram-check` memastikan token bot dan ID benar.
+
+## Langkah 7. Jalankan
+```bash
+./scripts/run.sh
+```
+- **Web:** buka `http://localhost:8787` di browser Windows, masukkan token dari `CHUNAI_WEB_TOKEN` di `.env`
+  (`cat .env | grep WEB`).
+- **Telegram:** kirim `/start` ke bot Anda.
+- Skrip akan memulai ulang ChunAI otomatis bila berhenti. Hentikan dengan `Ctrl+C`.
+- Log: `data/logs/chunai.log`.
+
+**Dari Windows tanpa membuka Ubuntu:** klik kanan `scripts\start-chunai.ps1` → *Run with PowerShell*
+(ada di folder WSL: `\\wsl.localhost\Ubuntu\home\NAMAUBUNTU\chunai\scripts`).
+
+**Otomatis saat Windows login (opsional)**, di PowerShell:
+```powershell
+schtasks /Create /SC ONLOGON /TN "ChunAI" /TR "powershell -WindowStyle Hidden -File \\wsl.localhost\Ubuntu\home\NAMAUBUNTU\chunai\scripts\start-chunai.ps1"
+```
+
+---
+
+## Masalah umum
+
+| Gejala | Penyebab dan solusi |
+|---|---|
+| `wsl --install` tidak dikenal | Windows terlalu lama. Perbarui Windows (butuh 10 versi 2004+). |
+| Virtualisasi tidak aktif | Aktifkan *Virtualization / SVM* di BIOS komputer. |
+| ❌ Otentikasi Claude | Ulangi Langkah 4. Pastikan baris di `.env` tidak diawali `#` dan tanpa spasi. |
+| ❌ Chromium | `python -m playwright install chromium` lalu `sudo $(which python) -m playwright install-deps chromium` |
+| Bot Telegram diam | Cek `data/logs/chunai.log`. Pastikan komputer tidak tidur dan terminal/skrip masih berjalan. |
+| Log: "Conflict ... other instance" | Ada dua ChunAI berjalan dengan token yang sama. Tutup yang lain. |
+| Web tidak terbuka di `localhost:8787` | Pastikan `run.sh` berjalan; tutup program lain yang memakai port 8787. |
+| Tugas berat gagal / sangat lambat | RAM kurang. Biarkan `CHUNAI_HEAVY_SLOTS=1` dan tutup aplikasi lain. |
+| Sandbox analisis "tidak tersedia" | Pastikan WSL **versi 2**; `chunai doctor` menampilkan statusnya. |
+
+## Keamanan singkat
+- Jangan membagikan `.env`, token Claude, token bot, atau token Web.
+- Bot hanya melayani ID Telegram yang Anda daftarkan. Pesan dari orang lain ditolak.
+- Aksi berdampak (mengirim form, menulis file, perintah Bash di luar baca-saja) **selalu meminta izin Anda**.
+- Jangan membuka port 8787 ke internet tanpa HTTPS. Akses dari luar rumah sebaiknya lewat tunnel/VPN.
+- Dokumen yang berklasifikasi rahasia: periksa kebijakan instansi sebelum diproses lewat Telegram atau layanan cloud.
+- Bila token bot atau Claude pernah terlihat orang lain: buat ulang (`/revoke` di BotFather; `chunai auth` lagi).
+
+## Pembaruan
+Ambil kode terbaru (ZIP baru atau `git pull`), lalu:
+```bash
+cd ~/chunai && source .venv/bin/activate && pip install -e . && chunai doctor
+```
+
+## Bila nanti butuh aktif 24 jam (VPS)
+Gunakan server Linux (Ubuntu) dengan **minimal 2 vCPU dan 4 GB RAM** (2 GB bisa jalan dengan `CHUNAI_HEAVY_SLOTS=1` + swap,
+tetapi tidak nyaman). Langkahnya sama seperti Langkah 3–7, tanpa bagian WSL. Untuk server yang aktif terus, kunci API
+(`ANTHROPIC_API_KEY`) lebih sesuai daripada token langganan; cek ketentuan Anthropic terbaru.

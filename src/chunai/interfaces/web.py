@@ -165,14 +165,20 @@ def create_app(manager: SessionManager, token: str | None = None) -> FastAPI:
     return app
 
 
+def resolve_token() -> tuple[str, bool]:
+    """(token, dibuat_acak). Token dari CHUNAI_WEB_TOKEN tidak boleh dicetak ke log."""
+    env = os.environ.get("CHUNAI_WEB_TOKEN")
+    return (env, False) if env else (secrets.token_urlsafe(24), True)
+
+
 def serve(host: str = "127.0.0.1", port: int = 8787):
     import uvicorn
 
     from .core import default_agent_factory
-    token = os.environ.get("CHUNAI_WEB_TOKEN") or secrets.token_urlsafe(24)
+    token, generated = resolve_token()
     mgr = SessionManager(default_agent_factory())
     app = create_app(mgr, token)
     if host not in ("127.0.0.1", "localhost", "::1"):
         print("⚠ Server tidak hanya di localhost. Gunakan HTTPS (reverse proxy/tunnel) dan token yang kuat.")
-    print(f"ChunAI Web: http://{host}:{port}\nToken akses: {token}")
+    print(f"ChunAI Web: http://{host}:{port}\nToken akses: {token if generated else '(dari CHUNAI_WEB_TOKEN di .env)'}")
     uvicorn.run(app, host=host, port=port, log_level="warning")

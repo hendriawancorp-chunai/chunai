@@ -3,6 +3,11 @@
 AI Agent Assistant pribadi: riset, analisis data, kajian, presentasi, media, dan kerja web
 dengan **persetujuan sebelum eksekusi akhir**.
 
+## Pasang di Windows (disarankan: WSL2)
+Panduan langkah demi langkah: **[docs/PANDUAN_WINDOWS.md](docs/PANDUAN_WINDOWS.md)** (satu skrip pemasangan + `chunai doctor`).
+Perintah bantu: `chunai doctor [--live]` (periksa prasyarat), `chunai auth` (token langganan), `chunai telegram-check`.
+Pengaturan disimpan di `.env` (lihat `.env.example`); `.env` tidak boleh di-commit.
+
 ## Jalankan
 ```bash
 python3 -m venv .venv && . .venv/bin/activate

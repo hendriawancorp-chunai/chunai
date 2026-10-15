@@ -8,7 +8,6 @@ from __future__ import annotations
 
 import json
 import os
-import resource
 import shutil
 import subprocess
 import sys
@@ -16,6 +15,11 @@ import sysconfig
 import tempfile
 from dataclasses import dataclass, field
 from pathlib import Path
+
+try:                                  # modul 'resource' tidak ada di Windows
+    import resource
+except ImportError:                   # pragma: no cover
+    resource = None
 
 RUNNER = r'''
 import sys, os, json, builtins
@@ -76,7 +80,7 @@ class RunResult:
 
 
 def isolation_available() -> bool:
-    if not shutil.which("unshare"):
+    if os.name != "posix" or resource is None or not shutil.which("unshare"):
         return False
     try:
         r = subprocess.run(["unshare", "-rn", "true"], capture_output=True, timeout=10)
