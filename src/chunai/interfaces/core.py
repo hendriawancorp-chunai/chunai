@@ -12,7 +12,10 @@ from typing import Awaitable, Callable, Protocol
 
 from ..approval import ApprovalRequest, ApprovalResult
 
-SEND_DIRS = ("output", "grafik")          # hasil kerja yang otomatis dikirim ke pengguna
+# Folder internal yang TIDAK pernah dikirim otomatis (unggahan pengguna, tangkapan layar review, pratinjau, sementara)
+SKIP_DIRS = {".tmp", ".mpl", "masukan", "review", "pratinjau", "frames", "__pycache__", "node_modules"}
+SEND_SUFFIXES = {".docx", ".pptx", ".pdf", ".xlsx", ".xls", ".csv", ".png", ".jpg", ".jpeg", ".gif", ".webp",
+                 ".md", ".txt", ".mp4", ".zip", ".json", ".html"}
 MAX_FILES_PER_TURN = 12
 MAX_UPLOAD_BYTES = 20 * 1024 * 1024
 _IMG_IN_SUMMARY = re.compile(r"(review/[\w.\-]+\.png)")
@@ -69,14 +72,23 @@ class ApprovalBroker:
                 p.future.set_result(ApprovalResult(False, note))
 
 
+def is_deliverable(workdir: Path, f: Path) -> bool:
+    try:
+        rel = f.relative_to(workdir)
+    except ValueError:
+        return False
+    if any(part in SKIP_DIRS or part.startswith(".") for part in rel.parts):
+        return False
+    return f.is_file() and f.suffix.lower() in SEND_SUFFIXES and not f.name.endswith(".spec.json")
+
+
 def snapshot(workdir: Path) -> dict[str, float]:
+    """Semua file hasil kerja di workspace (rekursif), kecuali folder internal."""
     snap: dict[str, float] = {}
-    for d in SEND_DIRS:
-        base = workdir / d
-        if base.is_dir():
-            for f in base.rglob("*"):
-                if f.is_file() and f.suffix.lower() in {".docx", ".pptx", ".pdf", ".xlsx", ".png", ".jpg", ".md", ".csv", ".mp4"}:
-                    snap[str(f)] = f.stat().st_mtime
+    if workdir.is_dir():
+        for f in workdir.rglob("*"):
+            if is_deliverable(workdir, f):
+                snap[str(f)] = f.stat().st_mtime
     return snap
 
 
@@ -90,6 +102,24 @@ def pick_deliverables(changed: list[Path], final_text: str) -> list[Path]:
     kirim semua yang berubah. Versi perantara tidak membanjiri pengguna."""
     mentioned = [f for f in changed if f.name in final_text]
     return mentioned or changed
+
+
+def drain_outbox(agent, workdir: Path) -> list[Path]:
+    """Ambil (dan kosongkan) daftar file yang diminta agen untuk dikirim; hanya file di dalam workspace."""
+    box = getattr(agent, "outbox", None)
+    out: list[Path] = []
+    if not box:
+        return out
+    base = workdir.resolve()
+    for p in list(box):
+        try:
+            rp = Path(p).resolve()
+            if base in rp.parents and rp.is_file() and rp not in out:
+                out.append(rp)
+        except OSError:
+            pass
+    box.clear()
+    return out
 
 
 def safe_filename(name: str) -> str:
@@ -176,8 +206,15 @@ class Session:
                     if chunk.strip():
                         said.append(chunk)
                         await ch.send_text(chunk)
-                for f in pick_deliverables(changed_since(self.workdir, before), " ".join(said))[:MAX_FILES_PER_TURN]:
-                    await ch.send_file(f, f"Hasil: {f.name}")
+                chosen = drain_outbox(self.agent, self.workdir)                # pilihan EKSPLISIT agen (kirim_file)
+                files = chosen or pick_deliverables(changed_since(self.workdir, before), " ".join(said))
+                for f in files[:MAX_FILES_PER_TURN]:
+                    try:
+                        await ch.send_file(f, f"Hasil: {f.name}")
+                    except Exception as e:
+                        await ch.send_text(f"⚠ Gagal mengirim {f.name}: {type(e).__name__}. File tetap tersimpan di workspace.")
+                if len(files) > MAX_FILES_PER_TURN:
+                    await ch.send_text(f"(+{len(files) - MAX_FILES_PER_TURN} file lain tersimpan di workspace)")
             except asyncio.CancelledError:
                 await ch.send_text("⏹ Dihentikan.")
             except Exception as e:  # jangan membocorkan detail internal berlebihan

@@ -9,6 +9,7 @@ class FakeAgent:
 
     def __init__(self, reviewer, workdir):
         self.reviewer, self.workdir = reviewer, workdir
+        self.outbox = []
 
     async def __aenter__(self):
         return self
@@ -32,6 +33,24 @@ class FakeAgent:
         elif "selalu" in prompt:
             res = await self.reviewer(ApprovalRequest("Write", {"file_path": "a"}, "tulis a"))
             yield "OK-SELALU" if res.approved else "NO"
+        elif "buatdiakar" in prompt:                      # file di akar & subfolder bebas, plus file internal yang TIDAK boleh terkirim
+            w = self.workdir
+            (w / "bebas").mkdir(parents=True, exist_ok=True); (w / ".tmp").mkdir(exist_ok=True); (w / "masukan").mkdir(exist_ok=True)
+            (w / "laporan.docx").write_bytes(b"PK-akar")
+            (w / "catatan.txt").write_text("halo")
+            (w / "bebas" / "data.xlsx").write_bytes(b"PK-xlsx")
+            (w / "bebas" / "k.spec.json").write_text("{}")
+            (w / ".tmp" / "x.png").write_bytes(b"png")
+            (w / "masukan" / "unggahan.csv").write_text("a,b")
+            yield "Selesai."
+        elif "pilihfinal" in prompt:                      # agen membuat 2 versi tetapi memilih satu lewat kirim_file
+            out = self.workdir / "output"; out.mkdir(parents=True, exist_ok=True)
+            (out / "kajian.docx").write_bytes(b"v1"); (out / "kajian_2.docx").write_bytes(b"v2")
+            self.outbox.append(out / "kajian_2.docx")
+            yield "Final: kajian_2.docx"
+        elif "kirimlama" in prompt:                       # file lama (tidak berubah) dikirim lewat outbox, sebagai kirim_file
+            self.outbox.append(self.workdir / "arsip" / "kajian_lama.pdf")
+            yield "Mengirim ulang kajian_lama.pdf."
         elif "buatfile" in prompt:
             out = self.workdir / "output"
             out.mkdir(parents=True, exist_ok=True)

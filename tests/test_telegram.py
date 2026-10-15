@@ -266,3 +266,21 @@ async def test_status_shows_current_time(setup):
     bot, tg, mgr = setup
     await bot.handle_update(msg(OWNER, "/status"))
     assert "Waktu:" in tg.texts()[-1] and "WIB" in tg.texts()[-1]
+
+
+async def test_telegram_sends_files_from_anywhere_in_workspace(setup):
+    bot, tg, mgr = setup
+    await bot.handle_update(msg(OWNER, "tolong buatdiakar"))
+    await settle(mgr)
+    docs = tg.sent("sendDocument")
+    assert len(docs) == 3                                      # laporan.docx, catatan.txt, data.xlsx (internal tidak ikut)
+
+
+async def test_telegram_kirim_file_existing_document(setup):
+    bot, tg, mgr = setup
+    sess = mgr.get(f"tg{OWNER}")
+    (sess.workdir / "arsip").mkdir(parents=True, exist_ok=True)
+    (sess.workdir / "arsip" / "kajian_lama.pdf").write_bytes(b"%PDF")
+    await bot.handle_update(msg(OWNER, "kirimlama"))
+    await settle(mgr)
+    assert len(tg.sent("sendDocument")) == 1

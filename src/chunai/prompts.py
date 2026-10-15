@@ -52,4 +52,10 @@ Aturan tambahan dokumen: JANGAN menulis nomor di teks judul (nomor "1.", "2.1" o
 di caption (otomatis). JANGAN membuat judul "Daftar Pustaka" sendiri; cukup isi references. Jangan mengarang nama penulis:
 kosongkan "author" kecuali pengguna menyebutnya. Periksa SEMUA halaman/slide lewat gambar gabungan dari pratinjau_file
 sebelum menyerahkan; perbaiki ruang kosong besar, teks terpotong, atau slide yang terlalu sepi.
+
+Pengiriman hasil: pengguna bekerja lewat Telegram/Web dan TIDAK melihat folder workspace. Setiap file final (dokumen, presentasi,
+gambar, video, data, catatan) HARUS dikirim langsung dengan kirim_file, lalu sebut nama filenya di jawaban. Untuk permintaan
+"kirim ulang/kirimkan file tadi", panggil kirim_file pada file yang sudah ada. Jangan hanya menyebut lokasi di workspace.
+Kirim HANYA versi final: bila membuat ulang dokumen sehingga muncul nama bersufiks (_2, _3), kirim yang terbaru dan sebut nama
+PERSIS seperti yang dilaporkan hasil tool. Jangan mengirim versi perantara.
 """

@@ -25,6 +25,7 @@ READ_ONLY_TOOLS = {
     "mcp__chunai__periksa_dokumen", "mcp__chunai__pratinjau_file",   # tidak menimpa file
     "mcp__chunai__buat_grafik",
     "mcp__chunai__buat_gambar", "mcp__chunai__edit_gambar", "mcp__chunai__buat_video", "mcp__chunai__slide_ke_video",
+    "mcp__chunai__kirim_file",        # mengirim file workspace ke pengguna sendiri (chat yang sama)
     "mcp__chunai__jalankan_python",   # sandbox: tanpa jaringan, tulis hanya di workspace (lihat sandbox.py)   # hanya menulis PNG baru ke workspace/grafik/ (tidak menimpa)
 }
 

@@ -9,7 +9,7 @@ from . import data as D
 from .report import lint_report
 
 
-def build_server(workdir: Path, web=None):
+def build_server(workdir: Path, web=None, outbox: list | None = None):
     workdir = workdir.resolve()
 
     @tool("periksa_laporan",
@@ -73,7 +73,24 @@ def build_server(workdir: Path, web=None):
         return _ok(text) if r.ok else _err(text)
 
     from .media_tools import media_tools
-    tools = [periksa_laporan, profil_data, buat_grafik, jalankan_python, *office_tools(workdir), *media_tools(workdir)]
+    @tool("kirim_file",
+          "Kirim file hasil kerja di workspace LANGSUNG ke pengguna (chat Telegram/Web) saat giliran ini selesai. "
+          "Panggil untuk setiap file final (dokumen, presentasi, gambar, video, data), juga untuk file yang dibuat sebelumnya "
+          "bila pengguna memintanya lagi.", {"path": str})
+    async def kirim_file(args):
+        try:
+            p = D.resolve_in(workdir, args["path"])
+        except ValueError as e:
+            return _err(str(e))
+        if not p.is_file():
+            return _err(f"File tidak ditemukan: {args['path']}")
+        if outbox is None:
+            return _err("Pengiriman langsung tidak tersedia di antarmuka ini; file tetap ada di workspace.")
+        if p not in outbox:
+            outbox.append(p)
+        return _ok(f"Akan dikirim ke pengguna: {p.name} ({p.stat().st_size // 1024} KB)")
+
+    tools = [periksa_laporan, profil_data, buat_grafik, jalankan_python, kirim_file, *office_tools(workdir), *media_tools(workdir)]
     if web is not None:
         tools += _web_tools(web, _ok, _err)
     return create_sdk_mcp_server("chunai", tools=tools)

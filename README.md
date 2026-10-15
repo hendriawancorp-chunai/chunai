@@ -36,7 +36,8 @@ chunai telegram       # atau: chunai serve  (Web + Telegram sekaligus)
 ```
 - Persetujuan: tombol ✅/❌ (Telegram) atau kartu (Web). Tidak dijawab dalam 10 menit = **ditolak**.
 - Aksi final web (klik/kirim) tidak punya tombol "selalu izinkan".
-- Kirim file (CSV/XLSX/PDF/…) lewat chat untuk dianalisis; hasil (docx/pptx/grafik) dikirim balik.
+- Kirim file (CSV/XLSX/PDF/…) lewat chat untuk dianalisis. Hasil kerja (docx/pptx/xlsx/gambar/video/teks) **dikirim langsung ke chat**:
+  agen memakai tool `kirim_file` (atau, bila tidak, semua file baru di workspace yang bukan internal).
 - Perintah Telegram: `/status` `/stop` `/reset` `/id`. Hanya chat pribadi; grup diabaikan.
 
 ## Dokumen & presentasi

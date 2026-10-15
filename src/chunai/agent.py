@@ -33,6 +33,7 @@ class ChunAI:
                 "mcp__chunai__klik": lambda i: self.web.describe(int(i["index"])),
                 "mcp__chunai__kirim_form": self._preview_submit,
             }
+        self.outbox: list[Path] = []          # file yang diminta agen (kirim_file) untuk dikirim ke pengguna
         self.model = model
         self.max_budget_usd = max_budget_usd
         self._client: ClaudeSDKClient | None = None
@@ -67,7 +68,7 @@ class ChunAI:
             system_prompt=SYSTEM_PROMPT,
             agents=SUBAGENTS,
             cwd=str(self.workdir),
-            mcp_servers={"chunai": build_server(self.workdir, self.web)},
+            mcp_servers={"chunai": build_server(self.workdir, self.web, self.outbox)},
             hooks={"PreToolUse": [HookMatcher(hooks=[self._pre_tool_hook])]},
             can_use_tool=self._can_use_tool,
             permission_mode="default",
@@ -102,6 +103,7 @@ class ChunAI:
                     if isinstance(block, TextBlock):
                         yield block.text
                     elif isinstance(block, ToolUseBlock):
-                        self.audit.record("tool_use", tool=block.name)
+                        extra = {"path": str(block.input.get("path", ""))[:200]} if block.name.endswith("kirim_file") else {}
+                        self.audit.record("tool_use", tool=block.name, **extra)
             elif isinstance(msg, ResultMessage):
                 self.audit.record("turn_done", cost_usd=getattr(msg, "total_cost_usd", None))
