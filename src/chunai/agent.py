@@ -12,6 +12,7 @@ from claude_agent_sdk import (
 from .agents import SUBAGENTS
 from .approval import ApprovalGate, Reviewer
 from .audit import AuditLog
+from .browser import WebConfig, WebSession
 from .prompts import SYSTEM_PROMPT
 from .tools import build_server
 
@@ -19,14 +20,24 @@ from .tools import build_server
 class ChunAI:
     def __init__(self, reviewer: Reviewer, workdir: str | Path = "data/workspace",
                  audit_path: str | Path = "data/audit.jsonl", model: str | None = None,
-                 max_budget_usd: float | None = 5.0):
+                 max_budget_usd: float | None = 5.0, web: WebConfig | None = None):
         self.workdir = Path(workdir).resolve()
         self.workdir.mkdir(parents=True, exist_ok=True)
         self.audit = AuditLog(audit_path)
         self.gate = ApprovalGate(reviewer=reviewer, audit=self.audit)
+        self.web = WebSession(web, self.workdir) if web else None
+        if web:
+            self.gate.allowed_domains = set(web.allowed_domains)
+            self.gate.previewers = {
+                "mcp__chunai__klik": lambda i: self.web.describe(int(i["index"])),
+                "mcp__chunai__kirim_form": self._preview_submit,
+            }
         self.model = model
         self.max_budget_usd = max_budget_usd
         self._client: ClaudeSDKClient | None = None
+
+    async def _preview_submit(self, tool_input: dict) -> str:
+        return f"{await self.web.describe(int(tool_input['index']))}\n{await self.web.review()}"
 
     async def _can_use_tool(self, tool_name, tool_input, context):
         result = await self.gate.check(tool_name, tool_input)
@@ -55,7 +66,7 @@ class ChunAI:
             system_prompt=SYSTEM_PROMPT,
             agents=SUBAGENTS,
             cwd=str(self.workdir),
-            mcp_servers={"chunai": build_server(self.workdir)},
+            mcp_servers={"chunai": build_server(self.workdir, self.web)},
             hooks={"PreToolUse": [HookMatcher(hooks=[self._pre_tool_hook])]},
             can_use_tool=self._can_use_tool,
             permission_mode="default",
@@ -71,6 +82,8 @@ class ChunAI:
     async def __aexit__(self, *exc):
         if self._client:
             await self._client.disconnect()
+        if self.web:
+            await self.web.close()
 
     async def ask(self, prompt: str) -> AsyncIterator[str]:
         """Kirim perintah, hasilkan potongan teks balasan."""

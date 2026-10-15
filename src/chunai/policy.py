@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import re
 from enum import Enum
+from urllib.parse import urlparse
 
 
 class Decision(str, Enum):
@@ -35,8 +36,27 @@ _READ_HINT = re.compile(r"(read|get|list|search|fetch|snapshot|screenshot|naviga
 _DENY_BASH = re.compile(r"(rm\s+-rf\s+/(\s|$)|mkfs|:\(\)\s*\{|dd\s+if=.*of=/dev/|shutdown|reboot)", re.I)
 
 
-def classify(tool_name: str, tool_input: dict | None = None) -> Decision:
+# Web Agent: draf (membaca/mengisi) otomatis; klik & kirim SELALU minta izin.
+WEB_DRAFT_TOOLS = {"mcp__chunai__baca_halaman", "mcp__chunai__isi_field", "mcp__chunai__siapkan_review"}
+WEB_OPEN_TOOL = "mcp__chunai__buka_halaman"
+WEB_FINAL_TOOLS = {"mcp__chunai__klik", "mcp__chunai__kirim_form"}
+
+
+def host_allowed(url: str, allowed: set[str] | None) -> bool:
+    host = (urlparse(url).hostname or "").lower()
+    if not host or not allowed:
+        return False
+    return any(host == d or host.endswith("." + d) for d in (x.lower().lstrip(".") for x in allowed))
+
+
+def classify(tool_name: str, tool_input: dict | None = None, allowed_domains: set[str] | None = None) -> Decision:
     tool_input = tool_input or {}
+    if tool_name == WEB_OPEN_TOOL:
+        return Decision.AUTO if host_allowed(str(tool_input.get("url", "")), allowed_domains) else Decision.ASK
+    if tool_name in WEB_DRAFT_TOOLS:
+        return Decision.AUTO
+    if tool_name in WEB_FINAL_TOOLS:
+        return Decision.ASK
     if tool_name == "Bash" and _DENY_BASH.search(str(tool_input.get("command", ""))):
         return Decision.DENY
     if tool_name in READ_ONLY_TOOLS:
