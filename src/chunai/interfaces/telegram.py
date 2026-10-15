@@ -222,7 +222,7 @@ class TelegramBot:
             await self.mgr.reset(f"tg{uid}")
             await ch_.send_text("Sesi baru dimulai.")
         elif cmd == "/status":
-            await ch.send_text(f"Sesi: {'sibuk' if sess.busy else 'siap'}\nMenunggu izin: {len(sess.broker.pending)}\nWaktu: {describe()}")
+            await ch.send_text(f"Sesi: {'sibuk' if sess.busy else 'siap'}\nMenunggu izin: {len(sess.broker.pending)}\nWaktu: {describe()}\nPemakaian hari ini: setara ${self.mgr.today_cost():.2f}" + (f" dari batas ${self.mgr.daily_budget:.2f}" if self.mgr.daily_budget else ""))
         else:
             await ch.send_text("Perintah tidak dikenal. Ketik /help.")
 

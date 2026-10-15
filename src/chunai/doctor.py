@@ -56,6 +56,31 @@ def token_shape(tok: str) -> str:
     return f"panjang {len(tok)}, awalan {head}{warn}"
 
 
+def security_checks() -> list[Check]:
+    c: list[Check] = []
+    import stat
+    envf = Path(os.environ.get("CHUNAI_ENV_FILE") or ".env")
+    if envf.exists() and os.name == "posix":
+        mode = stat.S_IMODE(envf.stat().st_mode)
+        c.append(Check("Keamanan: izin .env", mode & 0o077 == 0, "600 (hanya Anda)" if mode & 0o077 == 0 else
+                       f"{oct(mode)} terlalu terbuka. Jalankan: chmod 600 {envf}", critical=False))
+    wt = os.environ.get("CHUNAI_WEB_TOKEN", "")
+    if wt:
+        c.append(Check("Keamanan: kekuatan token Web", len(wt) >= 24, f"panjang {len(wt)}" if len(wt) >= 24 else
+                       "terlalu pendek (min. 24 karakter). Hapus nilainya di .env lalu jalankan ulang install_wsl.sh atau isi token acak panjang", critical=False))
+    host = os.environ.get("CHUNAI_HOST", "127.0.0.1")
+    c.append(Check("Keamanan: alamat Web", host in ("127.0.0.1", "localhost", "::1"),
+                   f"{host} (hanya komputer ini)" if host in ("127.0.0.1", "localhost", "::1") else
+                   f"{host} terbuka ke jaringan. Gunakan HTTPS/tunnel dan token kuat; jangan buka langsung ke internet", critical=False))
+    if os.environ.get("CHUNAI_TELEGRAM_TOKEN") and not os.environ.get("CHUNAI_TELEGRAM_USERS", "").strip():
+        c.append(Check("Keamanan: daftar pengguna Telegram", False, "token bot ada tetapi CHUNAI_TELEGRAM_USERS kosong (bot menolak start). "
+                       "Jalankan: chunai setup-telegram", critical=False))
+    from .usage import daily_limit
+    lim = daily_limit()
+    c.append(Check("Batas pemakaian harian", True, f"setara ${lim:.0f}/hari" if lim else "tanpa batas (disarankan mengisi CHUNAI_DAILY_BUDGET_USD)", critical=False))
+    return c
+
+
 def run_checks() -> list[Check]:
     c: list[Check] = []
     v = sys.version_info
@@ -95,6 +120,7 @@ def run_checks() -> list[Check]:
                    "isi CHUNAI_TELEGRAM_TOKEN dan CHUNAI_TELEGRAM_USERS di .env (opsional bila hanya memakai Web)", critical=False))
     c.append(Check("Token Web", bool(os.environ.get("CHUNAI_WEB_TOKEN")), "terpasang" if os.environ.get("CHUNAI_WEB_TOKEN") else
                    "isi CHUNAI_WEB_TOKEN di .env (jika kosong, token acak dibuat setiap kali jalan)", critical=False))
+    c.extend(security_checks())
     from .timeutil import describe, tz_name
     c.append(Check("Zona waktu", True, f"{tz_name()} - sekarang {describe()}", critical=False))
     return c

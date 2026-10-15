@@ -11,6 +11,8 @@ from pathlib import Path
 from typing import Awaitable, Callable, Protocol
 
 from ..approval import ApprovalRequest, ApprovalResult
+from ..timeutil import now
+from ..usage import day_cost, daily_limit
 
 # Folder internal yang TIDAK pernah dikirim otomatis (unggahan pengguna, tangkapan layar review, pratinjau, sementara)
 SKIP_DIRS = {".tmp", ".mpl", "masukan", "review", "pratinjau", "frames", "__pycache__", "node_modules"}
@@ -144,8 +146,9 @@ def save_upload(workdir: Path, name: str, data: bytes) -> Path:
 class Session:
     """Satu percakapan ChunAI untuk satu pengguna."""
 
-    def __init__(self, key: str, workdir: Path, agent_factory, approval_timeout: float = 600):
+    def __init__(self, key: str, workdir: Path, agent_factory, approval_timeout: float = 600, budget_guard=None):
         self.key, self.workdir = key, workdir
+        self.budget_guard = budget_guard                  # callable -> str|None (pesan bila batas harian tercapai)
         self.workdir.mkdir(parents=True, exist_ok=True)
         self._factory = agent_factory
         self.channel: Channel | None = None
@@ -220,9 +223,18 @@ class Session:
             except Exception as e:  # jangan membocorkan detail internal berlebihan
                 await ch.send_text(f"⚠ Terjadi kesalahan: {type(e).__name__}: {str(e)[:200]}")
 
+    async def _notify(self, msg: str):
+        if self.channel is not None:
+            await self.channel.send_text(msg)
+
     def start_turn(self, text: str) -> bool:
         if self.busy:
             return False
+        if self.budget_guard:
+            msg = self.budget_guard()
+            if msg:
+                self.task = asyncio.create_task(self._notify(msg))      # tidak menjalankan agen
+                return True
         if self.uploads:
             text = "File yang diunggah pengguna (di workspace): " + ", ".join(self.uploads) + "\n\n" + text
             self.uploads = []
@@ -231,15 +243,30 @@ class Session:
 
 
 class SessionManager:
-    def __init__(self, agent_factory, base_dir: str | Path = "data/sessions", approval_timeout: float = 600):
+    def __init__(self, agent_factory, base_dir: str | Path = "data/sessions", approval_timeout: float = 600,
+                 daily_budget: float | None = None):
         self.factory, self.base = agent_factory, Path(base_dir)
         self.timeout = approval_timeout
+        self.daily_budget = daily_limit() if daily_budget is None else daily_budget
         self.sessions: dict[str, Session] = {}
+
+    def today_cost(self) -> float:
+        return day_cost(self.base, now().date())
+
+    def budget_message(self) -> str | None:
+        lim = self.daily_budget
+        if lim and lim > 0:
+            used = self.today_cost()
+            if used >= lim:
+                return (f"⛔ Batas pemakaian harian tercapai (setara ${used:.2f} dari ${lim:.2f}). Tugas baru tidak dijalankan "
+                        "sampai besok. Untuk menaikkan batas: ubah CHUNAI_DAILY_BUDGET_USD di .env lalu jalankan ulang ChunAI.")
+        return None
 
     def get(self, key: str) -> Session:
         if key not in self.sessions:
             safe = re.sub(r"[^\w-]", "_", key)
-            self.sessions[key] = Session(key, self.base / safe / "workspace", self.factory, self.timeout)
+            self.sessions[key] = Session(key, self.base / safe / "workspace", self.factory, self.timeout,
+                                         budget_guard=self.budget_message)
         return self.sessions[key]
 
     async def reset(self, key: str):
