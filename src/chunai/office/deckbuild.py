@@ -178,6 +178,19 @@ class Deck:
     def ringkasan(self, d):
         s = self.new(d["title"], d.get("subtitle"))
         kp = d.get("kpis", [])
+        if kp and not d.get("cards") and not d.get("panel"):          # hanya KPI -> tampilkan besar, di tengah
+            n = len(kp); gap = 0.3
+            cols = min(n, 3); rows = -(-n // cols)
+            wk = (W - 1.0 - gap * (cols - 1)) / cols
+            hk = min(2.6, (5.0 - gap * (rows - 1)) / rows)
+            y0 = 1.9 + (5.0 - (hk * rows + gap * (rows - 1))) / 2
+            for i, k in enumerate(kp):
+                x = 0.5 + (i % cols) * (wk + gap); y = y0 + (i // cols) * (hk + gap)
+                self.rect(s, x, y, wk, hk, self.t.light); self.rect(s, x, y, wk, 0.07, self.t.primary)
+                self.text(s, x + 0.1, y + hk * 0.18, wk - 0.2, hk * 0.45, k["v"], size=48, bold=True, color=self.t.primary,
+                          align=PP_ALIGN.CENTER, anchor=MSO_ANCHOR.MIDDLE, minimum=24)
+                self.text(s, x + 0.15, y + hk * 0.66, wk - 0.3, hk * 0.3, k["l"], size=17, color="2B3A55", align=PP_ALIGN.CENTER, minimum=10)
+            return
         if kp:
             wk = (W - 0.9 - 0.15 * (len(kp) - 1)) / len(kp)
             for i, k in enumerate(kp):
@@ -218,6 +231,8 @@ class Deck:
         n = len(cols); gap = 0.18
         wc = (W - 1.0 - gap * (n - 1)) / n
         top = 1.55; bottom = 6.35 if d.get("band") else 6.95
+        most = max((len(c.get("items", [])) for c in cols), default=0)
+        bottom = min(bottom, top + 1.3 + 0.62 * max(most, 3))
         palette = [self.t.navy, self.t.primary, self.t.cyan, self.t.green]
         for i, c in enumerate(cols):
             x = 0.5 + i * (wc + gap)
@@ -230,8 +245,9 @@ class Deck:
             if c.get("items"):
                 self.bullets(s, x + 0.1, top + 1.12, wc - 0.2, bottom - top - 1.25, c["items"], size=16, gap=8)
         if d.get("band"):
-            self.rect(s, 0.5, 6.48, W - 1.0, 0.5, "FFFFFF", line="C9D3E0")
-            self.text(s, 0.6, 6.5, W - 1.2, 0.46, d["band"], size=12, bold=True, color=self.t.navy, align=PP_ALIGN.CENTER,
+            by = min(6.48, bottom + 0.25)
+            self.rect(s, 0.5, by, W - 1.0, 0.5, "FFFFFF", line="C9D3E0")
+            self.text(s, 0.6, by + 0.02, W - 1.2, 0.46, d["band"], size=12, bold=True, color=self.t.navy, align=PP_ALIGN.CENTER,
                       anchor=MSO_ANCHOR.MIDDLE, minimum=9)
 
     def tabel(self, d):
@@ -243,11 +259,11 @@ class Deck:
     def _table(self, s, d, x, y, w, h, size=None):
         header, rows = d["header"], d["rows"]
         if size is None:
-            size = 14 if len(rows) <= 4 else 12.5 if len(rows) <= 7 else 11 if len(rows) <= 10 else 10
-        header_h = 0.5
+            size = 18 if len(rows) <= 4 else 15 if len(rows) <= 7 else 12.5 if len(rows) <= 10 else 11
+        header_h = 0.6 if size >= 15 else 0.5
         widths = d.get("widths") or [1] * len(header)
         tot = sum(widths)
-        rh = min(0.85, (h - header_h) / max(len(rows), 1))
+        rh = min(1.0, (h - header_h) / max(len(rows), 1))
         shape = s.shapes.add_table(len(rows) + 1, len(header), Inches(x), Inches(y), Inches(w), Inches(header_h + rh * len(rows)))
         tbl = shape.table
         tblPr = shape._element.graphic.graphicData.tbl.tblPr
@@ -322,10 +338,10 @@ class Deck:
         c = gf.chart
         c.has_title = False
         c.has_legend = len(ch["series"]) > 1
-        c.font.size = Pt(11); c.font.name = self.t.font_slide
+        c.font.size = Pt(14); c.font.name = self.t.font_slide
         plot = c.plots[0]
         plot.has_data_labels = True
-        dl = plot.data_labels; dl.font.size = Pt(12); dl.font.bold = True
+        dl = plot.data_labels; dl.font.size = Pt(16); dl.font.bold = True
         dl.number_format = ch.get("number_format", "General"); dl.number_format_is_linked = False
         if kind != XL_CHART_TYPE.LINE_MARKERS:
             dl.position = XL_LABEL_POSITION.OUTSIDE_END
@@ -392,11 +408,12 @@ class Deck:
     def penutup(self, d):
         s = self.new(d["title"], d.get("subtitle"))
         pw = 7.9 if d.get("highlight") else W - 1.0
-        self.rect(s, 0.5, 1.6, pw, 5.2, "F2F6FB"); self.rect(s, 0.5, 1.6, 0.06, 5.2, self.t.primary)
-        self.bullets(s, 0.8, 1.9, pw - 0.5, 4.7, d["bullets"], size=24 if not d.get("highlight") else 22, gap=18)
+        ph = 5.2 if d.get("highlight") else min(5.2, 0.9 + 1.0 * len(d["bullets"]))
+        self.rect(s, 0.5, 1.6, pw, ph, "F2F6FB"); self.rect(s, 0.5, 1.6, 0.06, ph, self.t.primary)
+        self.bullets(s, 0.8, 1.85, pw - 0.5, ph - 0.4, d["bullets"], size=24 if not d.get("highlight") else 22, gap=18)
         if d.get("highlight"):
-            self.rect(s, 8.7, 1.6, 4.15, 5.2, self.t.primary)
-            self.text(s, 8.95, 1.8, 3.7, 4.8, d["highlight"], size=22, bold=True, color="FFFFFF", anchor=MSO_ANCHOR.MIDDLE, minimum=11)
+            self.rect(s, 8.7, 1.6, 4.15, ph, self.t.primary)
+            self.text(s, 8.95, 1.8, 3.7, ph - 0.4, d["highlight"], size=22, bold=True, color="FFFFFF", anchor=MSO_ANCHOR.MIDDLE, minimum=11)
 
     # ---------- orkestrasi ----------
     KINDS = {"cover", "ringkasan", "kolom", "tabel", "grafik", "proses", "teks", "penutup"}

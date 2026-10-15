@@ -16,6 +16,20 @@ from .render import to_pdf, to_pngs
 from .theme import load_theme
 
 
+def contact_sheet(pngs: list[Path], out: Path, cols: int = 2) -> Path:
+    from PIL import Image
+    ims = [Image.open(p).convert("RGB") for p in pngs]
+    w, h = max(i.width for i in ims), max(i.height for i in ims)
+    rows = -(-len(ims) // cols)
+    sheet = Image.new("RGB", (w * cols + 10 * (cols - 1), h * rows + 10 * (rows - 1)), "#888888")
+    for k, im in enumerate(ims):
+        sheet.paste(im, ((k % cols) * (w + 10), (k // cols) * (h + 10)))
+    if sheet.width > 2400:
+        sheet = sheet.resize((2400, int(sheet.height * 2400 / sheet.width)))
+    sheet.save(out)
+    return out
+
+
 def _unique(path: Path) -> Path:
     if not path.exists():
         return path
@@ -91,7 +105,11 @@ def office_tools(workdir: Path, themes_dir: str = "data/themes"):
                 return err(f"File tidak ditemukan: {args['path']}")
             pdf = src if src.suffix.lower() == ".pdf" else to_pdf(src, workdir / "pratinjau")
             pngs = to_pngs(pdf, workdir / "pratinjau", dpi=int(args.get("dpi") or 60))
-            return ok("Gambar pratinjau:\n" + "\n".join(str(p.relative_to(workdir)) for p in pngs))
+            msg = "Gambar pratinjau:\n" + "\n".join(str(p.relative_to(workdir)) for p in pngs)
+            if len(pngs) > 1:
+                sheet = contact_sheet(pngs, workdir / "pratinjau" / f"{src.stem}_semua.png")
+                msg = f"LIHAT INI DULU (semua halaman/slide dalam satu gambar): {sheet.relative_to(workdir)}\n" + msg
+            return ok(msg)
         except Exception as e:
             return err(f"Gagal pratinjau: {type(e).__name__}: {e}")
 

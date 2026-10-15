@@ -78,3 +78,45 @@ def test_unknown_theme_error_lists_available(tmp_path):
     (tmp_path / "asdp.json").write_text("{}")
     with pytest.raises(FileNotFoundError, match="asdp"):
         load_theme("biru", tmp_path)
+
+
+def test_docbuilder_cleans_agent_numbering_and_duplicate_references(tmp_path):
+    spec = {"title": "T", "blocks": [
+        {"h": 1, "text": "1. Pendahuluan"}, {"p": "Isi."},
+        {"h": 2, "text": "2.1 Hasil Utama"},
+        {"table": {"caption": "Tabel 1. Indikator", "header": ["a"], "rows": [["x"]]}},
+        {"h": 1, "text": "Daftar Pustaka"}],
+        "references": ["Contoh, A. (2026). Judul. https://contoh.example"]}
+    out = build_docx(spec, tmp_path / "x.docx", Theme(), Path("."))
+    d = Document(str(out))
+    heads = [p.text for p in d.paragraphs if p.style.name.startswith("Heading")]
+    assert heads == ["1.\tPendahuluan", "1.1.\tHasil Utama"]                 # tanpa nomor ganda; tanpa heading pustaka ganda
+    assert any(p.text == "Tabel 1. Indikator" for p in d.paragraphs)         # tanpa "Tabel 1. Tabel 1."
+    assert sum(p.text == "Daftar Pustaka" for p in d.paragraphs) == 1        # tepat satu, tanpa nomor
+
+
+def test_kpi_only_summary_is_large(tmp_path):
+    spec = {"slides": [{"kind": "ringkasan", "title": "R", "kpis": [{"v": "18 → 11", "l": "menit"}, {"v": "84%", "l": "puas"}, {"v": "6 → 9", "l": "loket"}]}]}
+    out, _ = build_pptx(spec, tmp_path / "k.pptx", Theme(), Path("."))
+    prs = Presentation(str(out))
+    tiles = [sh for sh in prs.slides[0].shapes if sh.shape_type == 1 and sh.height > 914400 * 2]
+    assert len(tiles) == 3                                                    # kotak KPI tinggi > 2 inci
+
+
+def test_contact_sheet(tmp_path):
+    from PIL import Image
+    from chunai.office.tools import contact_sheet
+    ps = []
+    for i in range(3):
+        p = tmp_path / f"{i}.png"; Image.new("RGB", (400, 225), "white").save(p); ps.append(p)
+    out = contact_sheet(ps, tmp_path / "s.png")
+    assert Image.open(out).size == (810, 460)
+
+
+def test_fabricated_author_is_not_printed(tmp_path):
+    spec = {"title": "T", "author": "ChunAI", "blocks": [{"p": "x"}]}
+    d = Document(str(build_docx(spec, tmp_path / "a.docx", Theme(), Path("."))))
+    assert all("ChunAI" not in p.text for p in d.paragraphs)
+    spec["author"] = "Budi Santoso"
+    d = Document(str(build_docx(spec, tmp_path / "b.docx", Theme(), Path("."))))
+    assert any("Budi Santoso" in p.text for p in d.paragraphs)

@@ -16,6 +16,9 @@ from docx.shared import Cm, Pt
 from .theme import Theme, rgb
 
 _INLINE = re.compile(r"(\*\*[^*]+\*\*|\*[^*]+\*)")
+_LEAD_NUM = re.compile(r"^\s*\d+(\.\d+)*\.?\s+")
+_LEAD_CAP = re.compile(r"^\s*(Tabel|Gambar|Table|Figure)\s+\d+\s*[.:\-–]?\s*", re.I)
+_REF_TITLE = re.compile(r"^\s*(daftar\s+pustaka|daftar\s+rujukan|referensi|references|bibliography)\s*$", re.I)
 
 
 def _shade(cell, hexcolor: str):
@@ -182,6 +185,8 @@ class DocBuilder:
             add_runs(p, line, size=16, bold=True, font=self.t.font_heading, color="111111")
             p.paragraph_format.space_after = Pt(0 if i < len(s["title"].split("\n")) - 1 else 12)
         for key, size, bold, ital in (("author", 11, True, False), ("affiliation", 10, False, False), ("contact", 9, False, True)):
+            if key == "author" and str(s.get(key, "")).strip().lower() in ("chunai", "claude", "ai", "asisten"):
+                continue                                              # jangan mengarang penulis; hanya nama yang diberikan pengguna
             if s.get(key):
                 p = d.add_paragraph(); p.alignment = WD_ALIGN_PARAGRAPH.CENTER
                 add_runs(p, s[key], size=size, bold=bold, italic=ital, color=self.t.navy if bold else self.t.muted)
@@ -190,6 +195,7 @@ class DocBuilder:
 
     # ---------- blok ----------
     def heading(self, level: int, text: str):
+        text = _LEAD_NUM.sub("", text) if level else text          # penomoran otomatis; buang nomor tulisan agen
         if level == 0:   # tanpa nomor, tengah (Executive Summary)
             p = self.doc.add_paragraph(); p.alignment = WD_ALIGN_PARAGRAPH.CENTER
             add_runs(p, text, size=15, bold=True, font="Cambria", color=self.t.navy)
@@ -247,7 +253,7 @@ class DocBuilder:
                 add_runs(par, str(val), size=8.5, bold=(i == 0 and t.get("bold_first", True)))
         if t.get("caption"):
             self.tab_no += 1
-            self.caption(f"Tabel {self.tab_no}. {t['caption']}")
+            self.caption(f"Tabel {self.tab_no}. {_LEAD_CAP.sub('', t['caption'])}")
         else:
             self.doc.add_paragraph()
 
@@ -260,12 +266,16 @@ class DocBuilder:
         p.add_run().add_picture(str(path), width=Cm(f.get("width_cm", 15)))
         if f.get("caption"):
             self.fig_no += 1
-            self.caption(f"Gambar {self.fig_no}. {f['caption']}")
+            self.caption(f"Gambar {self.fig_no}. {_LEAD_CAP.sub('', f['caption'])}")
 
     def references(self, refs: list[str]):
         if not refs:
             return
-        self.heading(1, self.spec.get("references_title", "Daftar Pustaka"))
+        self.doc.add_page_break()
+        p = self.doc.add_paragraph()                                # judul tanpa nomor (gaya referensi)
+        add_runs(p, self.spec.get("references_title", "Daftar Pustaka"), size=14, bold=True, font=self.t.font_heading, color=self.t.navy)
+        p.paragraph_format.space_after = Pt(8)
+        p.paragraph_format.keep_with_next = True
         for r in sorted(refs, key=str.lower):
             p = self.doc.add_paragraph(); p.alignment = WD_ALIGN_PARAGRAPH.LEFT
             p.paragraph_format.left_indent, p.paragraph_format.first_line_indent = Cm(1.0), Cm(-1.0)
@@ -276,8 +286,11 @@ class DocBuilder:
     def build(self) -> Document:
         self.cover()
         self.title_block()
+        has_refs = bool(self.spec.get("references"))
         for b in self.spec.get("blocks", []):
             if "h" in b:
+                if has_refs and _REF_TITLE.match(_LEAD_NUM.sub("", b["text"])):
+                    continue                                          # Daftar Pustaka dibuat otomatis dari references
                 self.heading(int(b["h"]), b["text"])
             elif "p" in b:
                 self.paragraph(b["p"], indent=b.get("indent", True))

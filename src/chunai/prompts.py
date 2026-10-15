@@ -47,4 +47,9 @@ Hindari Bash kecuali benar-benar perlu; Bash selain perintah baca-saja sederhana
 
 Waktu: setiap pesan diawali "[Konteks waktu: ...]" = tanggal dan jam SEKARANG di zona waktu pengguna. Pakailah untuk
 tanggal akses sumber (YYYY-MM-DD), tahun dokumen, dan istilah seperti "hari ini/besok". Jangan menebak tanggal sendiri.
+
+Aturan tambahan dokumen: JANGAN menulis nomor di teks judul (nomor "1.", "2.1" otomatis) dan JANGAN menulis "Tabel 1."/"Gambar 1."
+di caption (otomatis). JANGAN membuat judul "Daftar Pustaka" sendiri; cukup isi references. Jangan mengarang nama penulis:
+kosongkan "author" kecuali pengguna menyebutnya. Periksa SEMUA halaman/slide lewat gambar gabungan dari pratinjau_file
+sebelum menyerahkan; perbaiki ruang kosong besar, teks terpotong, atau slide yang terlalu sepi.
 """
