@@ -1,0 +1,116 @@
+{
+ "footer": "CONTOH / Penulis Contoh / 000000",
+ "cover": {
+  "kicker": "Short Article",
+  "title_lines": [
+   "Group Head",
+   "Operasional Pelabuhan"
+  ],
+  "label": "Contoh Dokumen Internal",
+  "meta": [
+   [
+    "Nama",
+    "Penulis Contoh"
+   ],
+   [
+    "Jabatan",
+    "Jabatan Contoh"
+   ],
+   [
+    "Unit Kerja",
+    "Unit Contoh"
+   ]
+  ],
+  "org": "Organisasi Contoh (Persero)"
+ },
+ "title": "Driving Operational Excellence:\nStrategi Peningkatan Operasional (CONTOH)",
+ "author": "Penulis Contoh",
+ "affiliation": "Organisasi Contoh — Kantor Pusat",
+ "blocks": [
+  {
+   "h": 0,
+   "text": "Executive Summary"
+  },
+  {
+   "p": "Dokumen ini adalah **contoh** keluaran ChunAI dengan data fiktif. Organisasi fiktif mengelola 36 simpul layanan dan mencatat pertumbuhan volume 11 persen pada 2025 (Contoh, 2026). Kajian mengusulkan empat strategi dan sepuluh program kerja."
+  },
+  {
+   "h": 1,
+   "text": "Pendahuluan"
+  },
+  {
+   "p": "Latar belakang disusun dengan *sitasi gaya APA* pada setiap klaim berangka, misalnya kapasitas terpasang meningkat 15 persen (Contoh, 2026; Rujukan & Mitra, 2025)."
+  },
+  {
+   "bullets": [
+    "Memastikan kesiapan dan keandalan fasilitas;",
+    "Pengendalian arus dan kelancaran layanan;",
+    "Efisiensi biaya operasional."
+   ]
+  },
+  {
+   "h": 1,
+   "text": "Pembahasan"
+  },
+  {
+   "h": 2,
+   "text": "Alur Pikir Penyusunan Kajian"
+  },
+  {
+   "p": "Kajian mengikuti tiga tahap: Identifikasi, Formulasi, dan Implementasi (Rujukan & Mitra, 2025)."
+  },
+  {
+   "h": 2,
+   "text": "Identifikasi Lingkup"
+  },
+  {
+   "h": 3,
+   "text": "Analisis Kondisi Saat Ini"
+  },
+  {
+   "table": {
+    "caption": "Analisis PESTEL (contoh)",
+    "header": [
+     "Dimensi",
+     "Faktor Kunci"
+    ],
+    "widths": [
+     3.5,
+     12.5
+    ],
+    "rows": [
+     [
+      "Politik",
+      "Perhatian nasional pada kelancaran layanan; dinamika regulasi."
+     ],
+     [
+      "Ekonomi",
+      "Pertumbuhan volume mendorong kebutuhan kapasitas (Contoh, 2026)."
+     ],
+     [
+      "Sosial",
+      "Lonjakan permintaan pada musim puncak."
+     ]
+    ]
+   }
+  },
+  {
+   "p": "Tabel di atas memetakan faktor eksternal. Penilaian merupakan pertimbangan penulis dan perlu dikalibrasi."
+  },
+  {
+   "h": 1,
+   "text": "Penutup"
+  },
+  {
+   "h": 2,
+   "text": "Kesimpulan"
+  },
+  {
+   "p": "Kesenjangan terbesar terletak pada konsistensi implementasi, bukan kelengkapan aturan (Contoh, 2026)."
+  }
+ ],
+ "references": [
+  "Contoh, A. (2026). *Laporan kinerja tahunan*. Organisasi Contoh. https://contoh.example/laporan",
+  "Rujukan, B., & Mitra, C. (2025). Kerangka keunggulan operasional. *Jurnal Contoh*, 12(3), 1–20. https://contoh.example/jurnal"
+ ]
+}

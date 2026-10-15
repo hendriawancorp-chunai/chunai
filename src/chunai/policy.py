@@ -20,6 +20,8 @@ READ_ONLY_TOOLS = {
     "Read", "Glob", "Grep", "WebSearch", "WebFetch",
     "TodoWrite", "Task", "Agent", "ListMcpResources", "ReadMcpResource", "ToolSearch",
     "mcp__chunai__periksa_laporan", "mcp__chunai__profil_data",
+    "mcp__chunai__buat_dokumen", "mcp__chunai__buat_presentasi",    # hanya menulis file baru di workspace/output/
+    "mcp__chunai__periksa_dokumen", "mcp__chunai__pratinjau_file",   # tidak menimpa file
     "mcp__chunai__buat_grafik",   # hanya menulis PNG baru ke workspace/grafik/ (tidak menimpa)
 }
 

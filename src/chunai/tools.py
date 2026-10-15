@@ -56,7 +56,8 @@ def build_server(workdir: Path, web=None):
         except (ValueError, FileNotFoundError) as e:
             return _err(str(e))
 
-    tools = [periksa_laporan, profil_data, buat_grafik]
+    from .office.tools import office_tools
+    tools = [periksa_laporan, profil_data, buat_grafik, *office_tools(workdir)]
     if web is not None:
         tools += _web_tools(web, _ok, _err)
     return create_sdk_mcp_server("chunai", tools=tools)

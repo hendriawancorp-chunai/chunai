@@ -1,0 +1,348 @@
+{
+ "slides": [
+  {
+   "kind": "cover",
+   "kicker": "Short Article",
+   "title": "Driving Operational Excellence: Strategi Peningkatan Operasional (CONTOH)",
+   "pills": [
+    "Penulis Contoh – 000000",
+    "Jabatan Contoh"
+   ],
+   "label": "Dokumen Internal (Contoh)",
+   "org": "Organisasi Contoh (Persero)",
+   "year": "Tahun 2026",
+   "tagline": "ANCHORING EXCELLENCE"
+  },
+  {
+   "kind": "ringkasan",
+   "title": "Executive Summary",
+   "subtitle": "Operasional menjadi jantung tata kelola layanan untuk ekosistem yang andal dan berdaya saing.",
+   "kpis": [
+    {
+     "v": "222+",
+     "l": "Unit armada"
+    },
+    {
+     "v": "36",
+     "l": "Simpul dikelola"
+    },
+    {
+     "v": "62",
+     "l": "Titik layanan digital"
+    },
+    {
+     "v": "Rp4,96 T",
+     "l": "Pendapatan 2025"
+    },
+    {
+     "v": "10 gap",
+     "l": "Dalam 4 akar penyebab"
+    },
+    {
+     "v": "4 + 10",
+     "l": "Strategi dan program"
+    }
+   ],
+   "cards": [
+    {
+     "h": "Profil dan kinerja 2025",
+     "t": "Operator terbesar dengan pertumbuhan volume 15% (data fiktif untuk contoh)."
+    },
+    {
+     "h": "Temuan utama",
+     "t": "25+ regulasi aktif, tetapi implementasi belum seragam di seluruh simpul."
+    },
+    {
+     "h": "Dua tekanan eksternal",
+     "t": "Tenggat kepatuhan nasional dan perubahan model bisnis menuju konsesi terbuka."
+    }
+   ],
+   "panel": {
+    "h": "Respons: 4 strategi dan 10 program kerja",
+    "items": [
+     {
+      "tag": "S1",
+      "h": "Percepatan kepatuhan regulasi turunan",
+      "s": "Program P1"
+     },
+     {
+      "tag": "S2",
+      "h": "Perluasan cakupan implementasi standar",
+      "s": "Program P3, P4, P6, P9, P10"
+     },
+     {
+      "tag": "S3",
+      "h": "Penguatan integrasi data dan sistem",
+      "s": "Program P2, P8"
+     },
+     {
+      "tag": "S4",
+      "h": "Penguatan tata kelola dan kelembagaan",
+      "s": "Program P5, P7"
+     }
+    ],
+    "note": "Terhubung ke tiga pilar Safety, Security, Service."
+   }
+  },
+  {
+   "kind": "kolom",
+   "title": "Strategi Optimasi",
+   "subtitle": "Empat strategi menjembatani akar penyebab ke sepuluh program kerja.",
+   "columns": [
+    {
+     "h": "S1",
+     "sub": "Percepatan Kepatuhan Regulasi",
+     "items": [
+      "P1 Kendali dimensi kendaraan"
+     ]
+    },
+    {
+     "h": "S2",
+     "sub": "Perluasan Cakupan Implementasi",
+     "items": [
+      "P3 Keandalan fasilitas",
+      "P4 Sterilisasi dan zonasi",
+      "P6 SPM, SOP, alih daya",
+      "P9 Ticketing",
+      "P10 Integrasi multimoda"
+     ]
+    },
+    {
+     "h": "S3",
+     "sub": "Integrasi Data dan Sistem",
+     "items": [
+      "P2 Akurasi manifes",
+      "P8 Model V/C Ratio"
+     ]
+    },
+    {
+     "h": "S4",
+     "sub": "Tata Kelola dan Kelembagaan",
+     "items": [
+      "P5 Konsesi dan transisi",
+      "P7 Evaluasi tarif"
+     ]
+    }
+   ],
+   "band": "Framework: Diagnosis → Kapabilitas → Strategi → Hasil"
+  },
+  {
+   "kind": "tabel",
+   "title": "Program Kerja",
+   "subtitle": "Sepuluh program kerja hasil analisis, disinergikan dengan program divisi.",
+   "header": [
+    "Program",
+    "Strategi",
+    "Pilar",
+    "Asal",
+    "Output / KPI utama",
+    "Waktu"
+   ],
+   "widths": [
+    4,
+    1.1,
+    1.2,
+    1.2,
+    4.5,
+    2.2
+   ],
+   "highlight": [
+    1,
+    3
+   ],
+   "rows": [
+    [
+     "P1 Kendali dimensi kendaraan",
+     "S1",
+     "Safety",
+     "Baru",
+     "Sensor aktif sebelum tenggat",
+     "0–12 bulan"
+    ],
+    [
+     "P2 Akurasi dan integrasi manifes",
+     "S3",
+     "Safety",
+     "Lanjutan",
+     "Selisih manifes-realisasi turun",
+     "0–12 bulan"
+    ],
+    [
+     "P3 Keandalan fasilitas",
+     "S2",
+     "Safety",
+     "Baru",
+     "Lead time perbaikan",
+     "SOP 0–6 bulan"
+    ],
+    [
+     "P4 Perluasan sterilisasi",
+     "S2",
+     "Security",
+     "Lanjutan",
+     "6 menjadi 16 simpul",
+     "Ekspansi 6–24 bulan"
+    ]
+   ],
+   "note": "Baris biru = melanjutkan program strategis divisi."
+  },
+  {
+   "kind": "grafik",
+   "title": "Proyeksi Dampak Optimasi",
+   "subtitle": "Skenario moderat: tambahan pendapatan Rp173,6 miliar (data fiktif).",
+   "kpis": [
+    {
+     "v": "Rp4,96 T",
+     "l": "Pendapatan 2025"
+    },
+    {
+     "v": "0,220%",
+     "l": "Kecelakaan"
+    },
+    {
+     "v": "24,36%",
+     "l": "Pelanggaran"
+    },
+    {
+     "v": "16 dari 36",
+     "l": "Tersterilisasi"
+    }
+   ],
+   "chart": {
+    "type": "bar",
+    "title": "Tambahan pendapatan per skenario (Rp miliar)",
+    "categories": [
+     "Konservatif",
+     "Moderat",
+     "Optimistik"
+    ],
+    "series": [
+     {
+      "name": "Rp M",
+      "values": [
+       99.5,
+       173.6,
+       257.9
+      ]
+     }
+    ],
+    "highlight": 1,
+    "number_format": "0.0"
+   },
+   "side_table": {
+    "header": [
+     "Indikator",
+     "Konservatif",
+     "Moderat",
+     "Optimistik"
+    ],
+    "widths": [
+     2.6,
+     1.6,
+     1.6,
+     1.6
+    ],
+    "highlight_col": 2,
+    "rows": [
+     [
+      "Muatan puncak",
+      "+1,56%",
+      "+3,4%",
+      "+5,31%"
+     ],
+     [
+      "Yield pendapatan",
+      "+2%",
+      "+3,5%",
+      "+5,2%"
+     ],
+     [
+      "Cakupan sterilisasi",
+      "10",
+      "16",
+      "20"
+     ]
+    ]
+   }
+  },
+  {
+   "kind": "proses",
+   "title": "Roadmap Implementasi",
+   "subtitle": "Fase 1A mengejar tenggat KPI; Fase 2 dan 3 memperluas dan melembagakan.",
+   "steps": [
+    {
+     "h": "FASE 1A",
+     "sub": "0–3 bulan",
+     "lead": "Prioritas KPI",
+     "items": [
+      "Assessment 8 simpul",
+      "Sterilisasi 6 simpul",
+      "Sensor dimensi"
+     ]
+    },
+    {
+     "h": "FASE 1B",
+     "sub": "3–12 bulan",
+     "lead": "Inisiasi dan integrasi",
+     "items": [
+      "Akurasi manifes",
+      "Uji V/C Ratio",
+      "Audit SPM pertama"
+     ]
+    },
+    {
+     "h": "FASE 2",
+     "sub": "Tahun ke-2",
+     "lead": "Perluasan",
+     "items": [
+      "Sterilisasi 6 ke 16",
+      "Tarif tahap lanjut"
+     ]
+    },
+    {
+     "h": "FASE 3",
+     "sub": "Tahun ke-3",
+     "lead": "Institusionalisasi",
+     "items": [
+      "V/C instrumen baku investasi",
+      "Budaya safety"
+     ]
+    }
+   ],
+   "band": "Regulasi – SPM – SOP – Zonasi dan Sterilisasi – Digitalisasi",
+   "side": {
+    "h": "Dari gap ke aksi dalam tiga tahap",
+    "stats": [
+     {
+      "v": "10",
+      "l": "gap operasional dalam 4 akar penyebab"
+     },
+     {
+      "v": "4",
+      "l": "strategi"
+     },
+     {
+      "v": "10",
+      "l": "program kerja"
+     },
+     {
+      "v": "12",
+      "l": "risiko dikelola"
+     }
+    ],
+    "note": "Data fiktif."
+   }
+  },
+  {
+   "kind": "penutup",
+   "title": "Kesimpulan dan Rekomendasi",
+   "subtitle": "Tiga keputusan yang diminta dari pimpinan.",
+   "bullets": [
+    "Tetapkan empat strategi dan sepuluh program sebagai portofolio resmi",
+    "Prioritaskan program lanjutan yang punya tenggat KPI",
+    "Percepat kajian dan pilot konsesi dalam 0–3 bulan"
+   ],
+   "highlight": "Bukan memulai dari nol: strategi merangkul capaian yang sudah ada."
+  }
+ ]
+}
