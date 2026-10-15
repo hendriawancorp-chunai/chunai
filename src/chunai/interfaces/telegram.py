@@ -83,7 +83,10 @@ class TelegramBot:
             r = await self.client.post(url, data={k: v for k, v in (data or {}).items()}, files=files)
         else:
             r = await self.client.post(url, json=data or {})
-        js = r.json()
+        try:
+            js = r.json()
+        except ValueError:
+            raise RuntimeError(f"Telegram {method}: respons bukan JSON (HTTP {r.status_code})") from None
         if not js.get("ok"):
             raise RuntimeError(f"Telegram {method} gagal: {js.get('description')}")
         return js["result"]
@@ -96,9 +99,25 @@ class TelegramBot:
         r.raise_for_status()
         return Path(info["file_path"]).name, r.content
 
-    # ---------- loop ----------
+    # ---------- diagnosis & loop ----------
+    async def check(self) -> dict:
+        """Verifikasi token & keadaan bot. Mengembalikan info yang aman ditampilkan (tanpa token)."""
+        me = await self.api("getMe")
+        wh = await self.api("getWebhookInfo")
+        return {"username": me.get("username"), "id": me.get("id"), "webhook_url": wh.get("url") or "",
+                "pending_updates": wh.get("pending_update_count", 0), "allowed_ids": sorted(self.allowed)}
+
+    async def prepare(self) -> dict:
+        """Dipanggil sebelum polling: pastikan tidak ada webhook (webhook membuat getUpdates ditolak)."""
+        info = await self.check()
+        if info["webhook_url"]:
+            log.warning("Webhook terdaftar (%s) dihapus agar long polling bisa jalan.", info["webhook_url"])
+            await self.api("deleteWebhook", {"drop_pending_updates": False})
+        return info
+
     async def run(self):
-        log.info("ChunAI Telegram berjalan; pengguna diizinkan: %s", sorted(self.allowed))
+        info = await self.prepare()
+        log.info("ChunAI Telegram berjalan sebagai @%s; pengguna diizinkan: %s", info["username"], sorted(self.allowed))
         backoff = 1
         while not self._stop:
             try:
@@ -111,7 +130,14 @@ class TelegramBot:
             except asyncio.CancelledError:
                 raise
             except Exception as e:
-                log.warning("polling gagal: %s", e)
+                msg = str(e)
+                if "Conflict" in msg:
+                    log.error("Konflik: instance bot lain memakai token yang sama. Hentikan yang lain; menunggu...")
+                    backoff = 15
+                elif "Unauthorized" in msg:
+                    raise RuntimeError("Token Telegram ditolak (Unauthorized). Periksa CHUNAI_TELEGRAM_TOKEN.") from None
+                else:
+                    log.warning("polling gagal: %s", msg.replace(self.token, "***"))
                 await asyncio.sleep(backoff)
                 backoff = min(backoff * 2, 30)
 

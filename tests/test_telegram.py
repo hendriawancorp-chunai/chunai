@@ -190,3 +190,53 @@ async def test_reset_and_id(setup):
     assert f"{OWNER}" in tg.texts()[-1]
     await bot.handle_update(msg(OWNER, "/reset"))
     assert "Sesi baru" in tg.texts()[-1]
+
+
+class RichFakeTG(FakeTG):
+    def __init__(self, webhook="", fail=None):
+        super().__init__()
+        self.webhook, self.fail = webhook, fail
+
+    def handler(self, request):
+        method = request.url.path.rsplit("/", 1)[1]
+        if self.fail == "unauthorized":
+            return httpx.Response(401, json={"ok": False, "description": "Unauthorized"})
+        if method == "getMe":
+            self.calls.append((method, {}))
+            return httpx.Response(200, json={"ok": True, "result": {"id": 42, "username": "chunai_test_bot"}})
+        if method == "getWebhookInfo":
+            self.calls.append((method, {}))
+            return httpx.Response(200, json={"ok": True, "result": {"url": self.webhook, "pending_update_count": 3}})
+        if method == "deleteWebhook":
+            self.calls.append((method, json.loads(request.content)))
+            self.webhook = ""
+            return httpx.Response(200, json={"ok": True, "result": True})
+        if method == "getUpdates":
+            self.calls.append((method, {}))
+            raise asyncio.CancelledError          # hentikan loop run() pada polling pertama
+        return super().handler(request)
+
+
+def make_bot(tg, fake_factory, tmp_path):
+    return TelegramBot("SECRET-TOKEN-123", {OWNER}, SessionManager(fake_factory, tmp_path), base_url="https://tg.test",
+                       client=httpx.AsyncClient(transport=httpx.MockTransport(tg.handler)))
+
+
+async def test_check_reports_bot_without_token(fake_factory, tmp_path):
+    info = await make_bot(RichFakeTG("https://old.example/hook"), fake_factory, tmp_path).check()
+    assert info["username"] == "chunai_test_bot" and info["pending_updates"] == 3 and "SECRET" not in str(info)
+
+
+async def test_run_removes_stale_webhook_before_polling(fake_factory, tmp_path):
+    tg = RichFakeTG("https://old.example/hook")
+    with pytest.raises(asyncio.CancelledError):
+        await make_bot(tg, fake_factory, tmp_path).run()
+    order = [m for m, _ in tg.calls]
+    assert order.index("deleteWebhook") < order.index("getUpdates")
+    assert tg.sent("deleteWebhook")[0]["drop_pending_updates"] is False      # pesan tertunda tidak dibuang
+
+
+async def test_unauthorized_token_gives_clear_error_without_leak(fake_factory, tmp_path):
+    with pytest.raises(RuntimeError) as e:
+        await make_bot(RichFakeTG(fail="unauthorized"), fake_factory, tmp_path).run()
+    assert "SECRET-TOKEN" not in str(e.value)

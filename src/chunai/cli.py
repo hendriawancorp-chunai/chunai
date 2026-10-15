@@ -63,6 +63,7 @@ USAGE = """ChunAI
   chunai                       chat di terminal
   chunai web [host] [port]     antarmuka Web (default 127.0.0.1:8787; token dari CHUNAI_WEB_TOKEN)
   chunai telegram              bot Telegram (CHUNAI_TELEGRAM_TOKEN, CHUNAI_TELEGRAM_USERS)
+  chunai telegram-check        periksa token/ID/webhook Telegram (tanpa menjalankan bot)
   chunai serve                 Web + Telegram sekaligus
   chunai login <url>           login manual untuk Web Agent (komputer lokal)"""
 
@@ -84,6 +85,32 @@ async def run_telegram() -> None:
         await bot.run()
     finally:
         await mgr.close_all()
+
+
+async def run_telegram_check() -> None:
+    import os
+
+    import httpx
+
+    from .interfaces.core import SessionManager
+    from .interfaces.telegram import TelegramBot, allowed_ids_from_env
+    token = os.environ.get("CHUNAI_TELEGRAM_TOKEN")
+    ids = allowed_ids_from_env()
+    print(f"CHUNAI_TELEGRAM_TOKEN : {'terpasang' if token else 'BELUM diatur'}")
+    print(f"CHUNAI_TELEGRAM_USERS : {sorted(ids) if ids else 'BELUM diatur'}")
+    if not token or not ids:
+        sys.exit(1)
+    bot = TelegramBot(token, ids, SessionManager(lambda r, w: None))
+    try:
+        info = await bot.check()
+    except httpx.HTTPError as e:
+        sys.exit(f"Tidak bisa menjangkau Telegram: {type(e).__name__}. Periksa jaringan/allowlist domain api.telegram.org.")
+    except Exception as e:
+        sys.exit(f"Gagal: {str(e).replace(token, '***')}")
+    print(f"Bot                   : @{info['username']} (id {info['id']})")
+    print(f"Webhook               : {info['webhook_url'] or 'tidak ada (baik)'}")
+    print(f"Update tertunda       : {info['pending_updates']}")
+    print("OK. Jalankan: chunai telegram")
 
 
 async def run_serve() -> None:
@@ -121,6 +148,9 @@ def main() -> None:
             return
         if arg == "telegram":
             asyncio.run(run_telegram())
+            return
+        if arg == "telegram-check":
+            asyncio.run(run_telegram_check())
             return
         if arg == "serve":
             asyncio.run(run_serve())
