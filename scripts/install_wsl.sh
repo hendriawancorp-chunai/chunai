@@ -49,7 +49,7 @@ cat <<'MSG'
 
 SELESAI. Langkah berikutnya:
   1) Login Claude   :  source .venv/bin/activate && chunai auth   (tempel token ke .env: nano .env)
-  2) Telegram       :  isi CHUNAI_TELEGRAM_TOKEN dan CHUNAI_TELEGRAM_USERS di .env  (opsional)
+  2) Telegram       :  chunai setup-telegram   (opsional; token dan ID tersimpan otomatis)
   3) Cek ulang      :  chunai doctor --live
   4) Jalankan       :  ./scripts/run.sh      (Web: http://localhost:8787)
 MSG

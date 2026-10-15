@@ -65,7 +65,7 @@ USAGE = """ChunAI
   chunai telegram              bot Telegram (CHUNAI_TELEGRAM_TOKEN, CHUNAI_TELEGRAM_USERS)
   chunai doctor                periksa semua prasyarat (Python, Claude, Chromium, LibreOffice, ...)
   chunai auth                  login Claude; token disimpan otomatis ke .env
-  chunai telegram-check        periksa token/ID/webhook Telegram (tanpa menjalankan bot)
+  chunai setup-telegram        hubungkan bot Telegram (token divalidasi, ID pemilik terdeteksi otomatis)\n  chunai telegram-check        periksa token/ID/webhook Telegram (tanpa menjalankan bot)
   chunai serve                 Web + Telegram sekaligus
   chunai login <url>           login manual untuk Web Agent (komputer lokal)"""
 
@@ -169,6 +169,22 @@ def run_auth() -> None:
     sys.exit(code or 1)
 
 
+def run_setup_telegram() -> None:
+    import getpass
+
+    import httpx
+
+    from .envfile import env_path, save_env_var
+    from .setup_telegram import run_setup
+
+    def yes(prompt: str) -> bool:
+        return input(prompt).strip().lower() in ("y", "ya", "yes")
+
+    with httpx.Client() as client:
+        ok = run_setup(getpass.getpass, yes, print, client, lambda k, v: save_env_var(k, v, env_path()))
+    sys.exit(0 if ok else 1)
+
+
 def run_savetoken() -> None:
     from .doctor import token_shape
     from .envfile import env_path, save_env_var
@@ -204,6 +220,8 @@ def main() -> None:
             run_auth()
         if arg == "savetoken":
             run_savetoken()
+        if arg == "setup-telegram":
+            run_setup_telegram()
         if arg == "login" and len(sys.argv) >= 3:
             asyncio.run(login(sys.argv[2]))
             return

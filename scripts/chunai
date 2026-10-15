@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+# Pembungkus: menjalankan `chunai` dari lingkungan .venv tanpa perlu `source .venv/bin/activate`.
+# Pemakaian: ./scripts/chunai doctor --live
+cd "$(dirname "$0")/.." || exit 1
+exec .venv/bin/python -m chunai.cli "$@"

@@ -86,10 +86,25 @@ Harus muncul **"Uji nyata Claude - berhasil menjawab"**.
 
 > Token ini seperti kata sandi. **Jangan dibagikan atau di-commit.**
 
-## Langkah 5. Siapkan Telegram (opsional)
-1. Di Telegram, buka **@BotFather** → `/newbot` → catat **token** bot.
-2. Buka **@userinfobot** → catat **ID angka** Anda.
-3. Di `nano .env` isi `CHUNAI_TELEGRAM_TOKEN=` dan `CHUNAI_TELEGRAM_USERS=` (hanya ID ini yang akan dilayani bot).
+## Langkah 5. Hubungkan Telegram (opsional, otomatis)
+Siapkan token bot: di Telegram buka **@BotFather** → `/mybots` → pilih bot Anda → **API Token** (bila belum punya bot: `/newbot`).
+
+> **Setiap membuka jendela Ubuntu baru**, aktifkan dulu lingkungan Python (jika tidak, muncul `chunai: command not found`):
+> ```bash
+> cd ~/chunai && source .venv/bin/activate
+> ```
+> Alternatif tanpa aktivasi: awali perintah dengan `./scripts/chunai`, mis. `./scripts/chunai doctor`.
+
+```bash
+chunai setup-telegram
+```
+1. Tempel token bot saat diminta (layar tidak menampilkan apa pun, itu normal), lalu Enter.
+2. ChunAI memeriksa token ke Telegram dan menampilkan nama bot (`@...`).
+3. Buka Telegram, kirim pesan apa saja ke bot itu. ChunAI **mendeteksi ID Anda sendiri** dan menanyakan konfirmasi
+   (`Jadikan ... pemilik? [y/T]`). Ketik `y`.
+4. Token bot dan ID Anda **tersimpan otomatis** ke `.env`. Hanya akun ini yang akan dilayani bot.
+
+Periksa (opsional): `chunai telegram-check`.
 
 ## Langkah 6. Periksa
 ```bash
