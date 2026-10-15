@@ -31,22 +31,19 @@ Repo bersifat private, jadi pilih salah satu:
 
 **Opsi A (paling mudah, tanpa token):**
 1. Di browser, buka repo GitHub Anda → **Code → Download ZIP**, lalu ekstrak (misal ke `Downloads`).
-2. Buka **Ubuntu** dari menu Start, lalu salin folder ke rumah Ubuntu (ganti `NAMA` dengan nama pengguna Windows Anda dan
-   `chunai-main` dengan nama folder hasil ekstrak):
+2. Buka **Ubuntu** dari menu Start. Pertama lihat isi folder hasil ekstrak (ganti `NAMA` dengan nama pengguna Windows Anda):
    ```bash
-   cp -r /mnt/c/Users/NAMA/Downloads/chunai-main ~/chunai
+   ls /mnt/c/Users/NAMA/Downloads/chunai-main
    ```
-3. **Periksa hasilnya (penting):**
+   Harus tampil `scripts  src  docs  pyproject.toml ...`. Bila yang tampil hanya satu folder lagi (ekstrak bertingkat),
+   tambahkan `/chunai-main` di akhir jalur pada perintah berikut.
+3. Salin **isi** folder itu ke rumah Ubuntu (perintah ini aman diulang dan tidak membuat folder bertingkat):
    ```bash
+   mkdir -p ~/chunai
+   cp -r /mnt/c/Users/NAMA/Downloads/chunai-main/. ~/chunai/
    ls ~/chunai
    ```
-   Harus tampil `scripts  src  docs  pyproject.toml ...`. Jika yang tampil hanya **satu folder** (misal `chunai-main`), berarti
-   hasil ekstrak Windows bertingkat dua. Perbaiki dengan:
-   ```bash
-   rm -rf ~/chunai
-   cp -r /mnt/c/Users/NAMA/Downloads/chunai-main/chunai-main ~/chunai
-   ls ~/chunai
-   ```
+   `ls` harus langsung menampilkan `scripts  src  docs  pyproject.toml ...`.
 
 **Opsi B (git):** buat *Personal Access Token* di GitHub (Settings → Developer settings → Fine-grained tokens, izin
 *Contents: Read-only* untuk repo ini), lalu di Ubuntu:
@@ -113,7 +110,7 @@ schtasks /Create /SC ONLOGON /TN "ChunAI" /TR "powershell -WindowStyle Hidden -F
 
 | Gejala | Penyebab dan solusi |
 |---|---|
-| `scripts/install_wsl.sh: No such file or directory` | Folder tersalin bertingkat atau ZIP terlalu lama. Jalankan `ls ~/chunai`; bila hanya ada satu folder, ulangi Langkah 2 dengan folder dalamnya. Bila `scripts` memang tidak ada, unduh ZIP terbaru dari GitHub. |
+| `scripts/install_wsl.sh: No such file or directory` | Folder tersalin bertingkat (mis. `~/chunai/chunai-main`) karena `cp -r` ke folder yang sudah ada. Hapus (`rm -rf ~/chunai`) lalu ulangi perintah salin di Langkah 2. Bila `scripts` memang tidak ada di ZIP, unduh ZIP terbaru dari GitHub. |
 | `wsl --install` tidak dikenal | Windows terlalu lama. Perbarui Windows (butuh 10 versi 2004+). |
 | Virtualisasi tidak aktif | Aktifkan *Virtualization / SVM* di BIOS komputer. |
 | ❌ Otentikasi Claude | Ulangi Langkah 4. Pastikan baris di `.env` tidak diawali `#` dan tanpa spasi. |
