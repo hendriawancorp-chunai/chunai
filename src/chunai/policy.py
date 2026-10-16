@@ -4,6 +4,7 @@ Prinsip: baca bebas, tulis harus izin. Default untuk tool tak dikenal = MINTA IZ
 """
 from __future__ import annotations
 
+import ipaddress
 import re
 import shlex
 from enum import Enum
@@ -55,6 +56,19 @@ def host_allowed(url: str, allowed: set[str] | None) -> bool:
     return any(host == d or host.endswith("." + d) for d in (x.lower().lstrip(".") for x in allowed))
 
 
+def is_public_host(url: str) -> bool:
+    """True bila host tampak seperti situs publik. Menolak localhost, IP privat/loopback/link-local, nama tanpa titik,
+    dan akhiran internal (.local/.internal/.lan). Pemeriksaan nama saja (tanpa DNS)."""
+    host = (urlparse(url).hostname or "").lower().rstrip(".")
+    if not host or ("." not in host and ":" not in host):
+        return False
+    try:
+        return ipaddress.ip_address(host).is_global
+    except ValueError:
+        pass
+    return not host.endswith((".local", ".internal", ".lan", ".localhost", ".home", ".corp", ".intranet"))
+
+
 _SAFE_CMDS = {"ls", "head", "tail", "wc", "cat", "pwd", "file", "stat", "du"}
 _SAFE_FLAG = re.compile(r"^-[A-Za-z0-9]+$|^-n$|^--(lines|bytes|human-readable)=?\d*$")
 _BAD_CHARS = re.compile(r"[;`$<>(){}\\\n\r~&|]")
@@ -89,7 +103,11 @@ def is_safe_readonly_bash(command: str) -> bool:
 def classify(tool_name: str, tool_input: dict | None = None, allowed_domains: set[str] | None = None) -> Decision:
     tool_input = tool_input or {}
     if tool_name == WEB_OPEN_TOOL:
-        return Decision.AUTO if host_allowed(str(tool_input.get("url", "")), allowed_domains) else Decision.ASK
+        url = str(tool_input.get("url", ""))
+        if host_allowed(url, allowed_domains):
+            return Decision.AUTO
+        # situs baru: minta izin SEKALI (bisa disimpan permanen); alamat internal/privat tidak pernah boleh
+        return Decision.ASK if is_public_host(url) else Decision.DENY
     if tool_name in WEB_DRAFT_TOOLS:
         return Decision.AUTO
     if tool_name in WEB_FINAL_TOOLS:

@@ -29,7 +29,9 @@ class ChunAI:
         self.web = WebSession(web, self.workdir) if web else None
         if web:
             self.gate.allowed_domains = set(web.allowed_domains)
+            self.gate.on_domain = self._domain_added
             self.gate.previewers = {
+                "mcp__chunai__buka_halaman": self._preview_open,
                 "mcp__chunai__klik": lambda i: self.web.describe(int(i["index"])),
                 "mcp__chunai__kirim_form": self._preview_submit,
             }
@@ -38,6 +40,25 @@ class ChunAI:
         self.model = model
         self.max_budget_usd = max_budget_usd
         self._client: ClaudeSDKClient | None = None
+
+    async def _preview_open(self, tool_input: dict) -> str:
+        from urllib.parse import urlparse
+        host = urlparse(str(tool_input.get("url", ""))).hostname or "?"
+        return (f"SITUS BARU: {host}\nSetuju = izinkan situs ini untuk sesi ini. ♾ Selalu = simpan permanen (tidak ditanya lagi).\n"
+                "Mengisi dan mengirim form di situs ini tetap selalu meminta izin Anda.")
+
+    def _domain_added(self, host: str, permanent: bool):
+        self.web.cfg.allowed_domains.add(host)
+        if permanent:
+            f = Path(self.web.cfg.allowlist_file)
+            try:
+                f.parent.mkdir(parents=True, exist_ok=True)
+                old = f.read_text(encoding="utf-8") if f.exists() else ""
+                if host not in {l.strip().lower() for l in old.splitlines()}:
+                    with f.open("a", encoding="utf-8") as fh:
+                        fh.write(("" if not old or old.endswith("\n") else "\n") + host + "\n")
+            except OSError:
+                pass
 
     async def _preview_submit(self, tool_input: dict) -> str:
         return f"{await self.web.describe(int(tool_input['index']))}\n{await self.web.review()}"

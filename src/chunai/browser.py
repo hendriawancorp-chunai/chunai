@@ -94,6 +94,7 @@ class WebConfig:
     cdp_url: str = "http://localhost:9222"
     headless: bool = True
     max_text: int = 6000
+    allowlist_file: str = "data/allowlist.txt"      # situs yang diizinkan permanen
 
 
 class WebError(Exception):
@@ -158,7 +159,7 @@ class WebSession:
         if p.scheme not in ("http", "https"):
             raise WebError(f"Skema '{p.scheme}' ditolak (hanya http/https).")
         if not host_allowed(url, self.cfg.allowed_domains):
-            raise WebError(f"Domain '{p.hostname}' tidak ada di allowlist.")
+            raise WebError(f"Domain '{p.hostname}' belum diizinkan. Panggil buka_halaman untuk alamat itu agar pengguna dapat menyetujuinya.")
 
     def _assert_on_allowed(self):
         if not self.page:
@@ -174,7 +175,7 @@ class WebSession:
             bad = self.page.url
             await self.page.goto("about:blank")
             self._elements = {}
-            raise WebError(f"Halaman berpindah ke domain di luar allowlist ({urlparse(bad).hostname}); dibatalkan.")
+            raise WebError(f"Halaman berpindah ke domain yang belum diizinkan ({urlparse(bad).hostname}); dibatalkan. Bila memang perlu, panggil buka_halaman ke alamat itu agar pengguna memutuskan.")
 
     # ---------- aksi ----------
     async def buka(self, url: str) -> str:

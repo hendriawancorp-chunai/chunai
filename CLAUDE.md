@@ -9,7 +9,7 @@ Dibangun di atas Claude Agent SDK (Python). Antarmuka: Telegram dan Web. Berjala
 
 ## Perintah
 ```bash
-python3 -m venv .venv && . .venv/bin/activate && pip install -e . && pytest -q     # 153 tes, harus lolos sebelum commit
+python3 -m venv .venv && . .venv/bin/activate && pip install -e . && pytest -q     # 159 tes, harus lolos sebelum commit
 chunai doctor [--live] | chunai audit | chunai serve | chunai telegram | chunai web
 ```
 
@@ -26,6 +26,6 @@ chunai doctor [--live] | chunai audit | chunai serve | chunai telegram | chunai 
   tangkapan layar tanpa rahasia, dan verifikasi dugaan sebelum menyatakan penyebab (diagnosis awal saya pernah keliru).
 - Akses jaringan sesi cloud dibatasi proxy (domain tertentu 403). Jangan mengakali; laporkan ke pengguna.
 - Semua klaim kualitas harus diverifikasi (hitung ulang angka, render dokumen jadi gambar dan lihat) sebelum dilaporkan.
-- Keamanan inti yang tidak boleh dilemahkan: approval gate (hook PreToolUse untuk SEMUA tool), allowlist domain Web Agent, kolom
+- Keamanan inti yang tidak boleh dilemahkan: approval gate (hook PreToolUse untuk SEMUA tool), allowlist domain Web Agent (situs baru hanya lewat kartu izin pengguna; alamat privat ditolak), kolom
   sensitif tidak diisi agen, sandbox `jalankan_python` (tanpa internet), Telegram hanya ID pemilik, aksi final web tanpa "selalu izinkan".
 - Tanggal/jam: zona waktu pengguna `Asia/Jakarta` (WIB); server UTC.

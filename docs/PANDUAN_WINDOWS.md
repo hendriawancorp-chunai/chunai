@@ -147,6 +147,7 @@ schtasks /Create /SC ONLOGON /TN "ChunAI" /TR "powershell -WindowStyle Hidden -F
 | Log: "Conflict ... other instance" | Ada dua ChunAI berjalan dengan token yang sama. Tutup yang lain. |
 | Web tidak terbuka di `localhost:8787` | Pastikan `run.sh` berjalan; tutup program lain yang memakai port 8787. |
 | Tugas berat gagal / sangat lambat | RAM kurang. Biarkan `CHUNAI_HEAVY_SLOTS=1` dan tutup aplikasi lain. |
+| Kartu "SITUS BARU" muncul | Normal: pertama kali agen membuka situs. Setuju = sesi ini; ♾ Selalu = simpan permanen. Tidak perlu mengedit file apa pun. |
 | Web Agent minta login lagi | Sesi habis. Jalankan `chunai login <alamat situs>`, login sendiri, tutup jendela; cookie sesi disimpan di `data/browser_state.json` (jangan dibagikan). |
 | Web Agent tidak bisa unggah berkas / CAPTCHA | Memang tidak didukung; lakukan sendiri lalu minta agen melanjutkan. |
 | Sandbox analisis "tidak tersedia" | Pastikan WSL **versi 2**; `chunai doctor` menampilkan statusnya. |

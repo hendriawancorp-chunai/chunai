@@ -106,7 +106,7 @@ async def test_bad_select_option_lists_choices(web, server):
 
 
 async def test_offlist_domain_and_scheme_refused(web, server):
-    with pytest.raises(WebError, match="allowlist"):
+    with pytest.raises(WebError, match="belum diizinkan"):
         await web.buka(server.replace("127.0.0.1", "localhost"))
     with pytest.raises(WebError, match="Skema"):
         await web.buka("file:///etc/passwd")
@@ -115,7 +115,7 @@ async def test_offlist_domain_and_scheme_refused(web, server):
 
 
 async def test_redirect_to_other_domain_is_blocked(web, server):
-    with pytest.raises(WebError, match="di luar allowlist"):
+    with pytest.raises(WebError, match="belum diizinkan"):
         await web.buka(server + "/redir")
     with pytest.raises(WebError):
         await web.isi(1, "x")               # tidak bisa bertindak setelah dibatalkan

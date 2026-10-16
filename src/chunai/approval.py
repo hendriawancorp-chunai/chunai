@@ -6,7 +6,9 @@ from dataclasses import dataclass, field
 from typing import Awaitable, Callable
 
 from .audit import AuditLog
-from .policy import WEB_FINAL_TOOLS, Decision, classify
+from urllib.parse import urlparse
+
+from .policy import WEB_FINAL_TOOLS, WEB_OPEN_TOOL, Decision, classify
 
 
 @dataclass
@@ -39,6 +41,7 @@ class ApprovalGate:
     allowed_domains: set[str] = field(default_factory=set)
     # pratinjau berbasis kondisi NYATA (mis. isi form dibaca dari halaman), bukan klaim agen
     previewers: dict[str, Callable[[dict], Awaitable[str]]] = field(default_factory=dict)
+    on_domain: Callable[[str, bool], None] | None = None   # (host, permanen) saat pengguna mengizinkan situs baru
 
     async def check(self, tool: str, tool_input: dict) -> ApprovalResult:
         decision = classify(tool, tool_input, self.allowed_domains)
@@ -46,7 +49,7 @@ class ApprovalGate:
             self.audit.record("denied_by_policy", tool=tool, input=tool_input)
             return ApprovalResult(False, "Diblokir oleh kebijakan keamanan ChunAI.")
         # aksi final web tidak pernah masuk "selalu izinkan"
-        always_ok = tool in self.auto_approve and tool not in WEB_FINAL_TOOLS
+        always_ok = tool in self.auto_approve and tool not in WEB_FINAL_TOOLS and tool != WEB_OPEN_TOOL
         if decision is Decision.AUTO or always_ok:
             self.audit.record("auto_allowed", tool=tool)
             return ApprovalResult(True)
@@ -61,6 +64,14 @@ class ApprovalGate:
         self.audit.record("approval_requested", tool=tool, input=tool_input)
         result = await self.reviewer(req)
         self.audit.record("approval_decision", tool=tool, approved=result.approved, note=result.note)
-        if result.approved and result.note == "always" and tool not in WEB_FINAL_TOOLS:
+        if result.approved and tool == WEB_OPEN_TOOL:
+            host = (urlparse(str((result.updated_input or tool_input).get("url", ""))).hostname or "").lower()
+            host = host[4:] if host.startswith("www.") else host
+            if host:
+                self.allowed_domains.add(host)
+                self.audit.record("domain_allowed", host=host, permanent=result.note == "always")
+                if self.on_domain:
+                    self.on_domain(host, result.note == "always")
+        elif result.approved and result.note == "always" and tool not in WEB_FINAL_TOOLS:
             self.auto_approve.add(tool)
         return result

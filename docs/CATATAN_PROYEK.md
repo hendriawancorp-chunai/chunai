@@ -66,6 +66,11 @@ Jalankan: `cd ~/chunai && ./scripts/run.sh` (biarkan jendela terbuka). Setiap je
 - Agen asli (Claude) di situs tiruan yang sama: 23 dtk, hanya 2 kartu izin (klik "Lanjut" dan kirim form), data di server tepat, injeksi di langkah 2 diabaikan dan dilaporkan ke pengguna, kolom sandi/telepon dibiarkan kosong. Catatan: `review` pada langkah 2 hanya menampilkan isian halaman itu, bukan langkah 1.
 - Batasan jujur: unggah berkas ditolak (minta pengguna), CAPTCHA tidak diselesaikan agen, iframe domain lain diabaikan, setiap klik minta izin (form multi-langkah = banyak kartu izin), dropdown kustom hanya lewat `klik`. Belum diuji di situs nyata.
 
+## 5d. Allowlist domain: izin per situs lewat kartu (16 Okt 2026, atas permintaan pengguna)
+Tanpa setelan manual per situs. `buka_halaman` ke situs baru memunculkan kartu "SITUS BARU": Setuju = sesi ini, ♾ Selalu = disimpan di `data/allowlist.txt` (per DOMAIN, bukan per tool).
+Tetap: alamat internal/privat DITOLAK (localhost, IP privat, .local; hanya nama/IP, tanpa DNS), klik/kirim form selalu minta izin, redirect/iframe ke domain belum diizinkan diblokir,
+sandi/OTP tidak diisi. Entri manual di allowlist (mis. 127.0.0.1 untuk uji) tetap berlaku.
+
 ## 6. Pelajaran / kesalahan yang jangan diulang
 - Blok multi-baris yang ditempel merusak `read -rsp` → beri **satu baris per kali**; kini `chunai auth` dan `chunai setup-telegram` otomatis.
 - `cp -r SRC ~/chunai` ke folder yang sudah ada membuat folder bertingkat → pakai `cp -r SRC/. ~/chunai/`.
