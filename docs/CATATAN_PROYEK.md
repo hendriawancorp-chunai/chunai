@@ -81,6 +81,10 @@ Jalankan: `cd ~/chunai && ./scripts/run.sh` (biarkan jendela terbuka). Setiap je
    pengguna (.pptx/.docx), jalankan `pytest` di Python 3.14 pada mesin pengguna, uji akun Telegram lain ditolak di Telegram asli,
    Dockerfile + VPS bila perlu 24 jam, memori profil pengguna (nama/jabatan; jangan dikarang).
 
+## 7b. Fase evaluasi (disepakati 16 Okt 2026)
+Pengguna memakai ChunAI 1–2 minggu di komputernya (langganan, tanpa biaya tambahan), mencatat tugas dan masalah sesuai `docs/EVALUASI_2_MINGGU.md`.
+Saat kembali: minta hasil `chunai audit 300` + catatan, jawab 7 pertanyaan evaluasi, lalu susun prioritas (Tahap 3, VPS/API, perbaikan kualitas).
+
 ## 8. Cara melanjutkan di sesi baru
 Tempel kira-kira: *"Lanjutkan proyek ChunAI. Baca `CLAUDE.md` dan `docs/CATATAN_PROYEK.md`, lalu kita kerjakan Tahap 3: …"*.
 Di sesi cloud: tambahkan repo (`hendriawancorp-chunai/chunai`), clone, `pip install -e . && pytest -q`.
