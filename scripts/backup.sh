@@ -11,7 +11,7 @@ OUT="$DEST/chunai-$STAMP.tar.gz"
 ITEMS=()
 for p in data/sessions data/themes data/allowlist.txt data/logs; do [ -e "$p" ] && ITEMS+=("$p"); done
 if [ "${#ITEMS[@]}" -eq 0 ]; then echo "Belum ada data untuk dicadangkan."; exit 0; fi
-tar --exclude='.tmp' --exclude='.mpl' --exclude='browser_profile' -czf "$OUT" "${ITEMS[@]}"
+tar --exclude='.tmp' --exclude='.mpl' --exclude='browser_profile' --exclude='browser_state.json' -czf "$OUT" "${ITEMS[@]}"
 chmod 600 "$OUT"
 ls -1t "$DEST"/chunai-*.tar.gz 2>/dev/null | tail -n +15 | xargs -r rm -f
 echo "Cadangan: $OUT ($(du -h "$OUT" | cut -f1))"

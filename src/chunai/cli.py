@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import asyncio
+import os
 import sys
 
 from .agent import ChunAI
@@ -55,8 +56,14 @@ async def login(url: str) -> None:
         await page.goto(url)
         print("Silakan login di jendela browser. Setelah selesai, tekan Enter di sini.")
         await asyncio.get_running_loop().run_in_executor(None, input)
+        from pathlib import Path
+        Path(cfg.state_file).parent.mkdir(parents=True, exist_ok=True)
+        state = await ctx.storage_state(path=cfg.state_file)          # termasuk cookie SESI yang akan hilang saat browser ditutup
+        if os.name == "posix":
+            os.chmod(cfg.state_file, 0o600)
         await ctx.close()
-    print(f"Sesi tersimpan di {cfg.profile_dir}. Jalankan: CHUNAI_BROWSER=profile chunai")
+    print(f"Sesi login tersimpan ({len(state.get('cookies', []))} cookie) di {cfg.state_file} dan profil {cfg.profile_dir}.\n"
+          "Berkas itu setara kata sandi: jangan dibagikan. Jalankan: CHUNAI_BROWSER=profile chunai")
 
 
 USAGE = """ChunAI

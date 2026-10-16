@@ -17,14 +17,14 @@ menyusun presentasi, membuat media grafis (gambar/video), dan pekerjaan berbasis
 | Analisis data (`profil_data`, `buat_grafik`, `jalankan_python` sandbox) | ✅ | angka diverifikasi ulang; sandbox tanpa internet |
 | Dokumen DOCX + presentasi PPTX bergaya referensi pengguna | ✅ | tema default biru korporat; logo/font belum |
 | Media: gambar (HTML→PNG), edit gambar, video (ffmpeg) | ✅ | gambar AI fotorealistik BELUM (butuh penyedia eksternal) |
-| Web Agent (Playwright, draf→review→izin→kirim) | ✅ di form tiruan | belum diuji di situs nyata + login manual |
+| Web Agent (Playwright, draf→review→izin→kirim) | ✅ di situs tiruan (login sesi, form 2 langkah, validasi server, iframe) | belum diuji di situs nyata |
 | Antarmuka Web | ✅ | teruji headless + agen asli |
 | Antarmuka Telegram | ✅ di Telegram asli | `/start`, `/id`, `/status`, `/stop`, tombol izin, unggah file, kirim file hasil |
 | Pemasangan Windows (WSL2) | ✅ | `install_wsl.sh`, `chunai doctor/auth/setup-telegram` |
 | Operasional (cadangan, audit, batas harian, daftar keamanan) | ✅ | `docs/OPERASIONAL.md` |
 | **Tahap 3: penyesuaian ke pekerjaan pengguna** | ⏳ | lihat bagian 7 |
 
-Terakhir: 148 tes lolos; commit `6a50899` (16 Okt 2026).
+Terakhir: 153 tes lolos (16 Okt 2026).
 
 ## 3. Arsitektur (modul utama di `src/chunai/`)
 - `agent.py` orkestrator `ChunAI` (hook izin, MCP in-process, konteks waktu, `outbox` untuk `kirim_file`); `agents.py` subagen peneliti/analis.
@@ -58,6 +58,12 @@ Jalankan: `cd ~/chunai && ./scripts/run.sh` (biarkan jendela terbuka). Setiap je
 - Agen sempat men-grep kode ChunAI untuk mencari skema slide dan mengirim referensi berbentuk objek: skema kini ada di deskripsi `buat_presentasi`,
   referensi objek dinormalkan menjadi string APA.
 - `modelcontextprotocol.io` tidak terjangkau dari sesi cloud (DNS/proxy); di komputer pengguna tidak dibatasi.
+
+## 5c. Pemeriksaan Web Agent (16 Okt 2026, situs tiruan)
+- Teruji: login manual lalu agen mewarisi sesi; form 2 langkah dengan validasi server; kolom sandi ditolak; teks injeksi ditandai; tidak ada kiriman ke server sebelum klik final.
+- Cacat ditemukan: cookie sesi (tanpa kedaluwarsa) hilang dari profil Chromium. Perbaikan: `chunai login` menyimpan `data/browser_state.json` (chmod 600, tidak ikut cadangan) dan cookie dipulihkan saat start, hanya untuk domain di allowlist.
+- Ditambah: elemen ber-`role` (combobox, option, tab, dst.), iframe yang domainnya diizinkan, peringatan CAPTCHA dan halaman login.
+- Batasan jujur: unggah berkas ditolak (minta pengguna), CAPTCHA tidak diselesaikan agen, iframe domain lain diabaikan, setiap klik minta izin (form multi-langkah = banyak kartu izin), dropdown kustom hanya lewat `klik`. Belum diuji di situs nyata.
 
 ## 6. Pelajaran / kesalahan yang jangan diulang
 - Blok multi-baris yang ditempel merusak `read -rsp` → beri **satu baris per kali**; kini `chunai auth` dan `chunai setup-telegram` otomatis.

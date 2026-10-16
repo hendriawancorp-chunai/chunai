@@ -18,6 +18,7 @@ def load_web_config(allowlist_file: str | Path = "data/allowlist.txt") -> WebCon
     return WebConfig(
         allowed_domains=domains, mode=mode,
         profile_dir=os.environ.get("CHUNAI_PROFILE_DIR", "data/browser_profile"),
+        state_file=os.environ.get("CHUNAI_STATE_FILE", "data/browser_state.json"),
         cdp_url=os.environ.get("CHUNAI_CDP_URL", "http://localhost:9222"),
         headless=os.environ.get("CHUNAI_HEADLESS", "1") != "0",
     )
