@@ -63,6 +63,7 @@ Jalankan: `cd ~/chunai && ./scripts/run.sh` (biarkan jendela terbuka). Setiap je
 - Teruji: login manual lalu agen mewarisi sesi; form 2 langkah dengan validasi server; kolom sandi ditolak; teks injeksi ditandai; tidak ada kiriman ke server sebelum klik final.
 - Cacat ditemukan: cookie sesi (tanpa kedaluwarsa) hilang dari profil Chromium. Perbaikan: `chunai login` menyimpan `data/browser_state.json` (chmod 600, tidak ikut cadangan) dan cookie dipulihkan saat start, hanya untuk domain di allowlist.
 - Ditambah: elemen ber-`role` (combobox, option, tab, dst.), iframe yang domainnya diizinkan, peringatan CAPTCHA dan halaman login.
+- Agen asli (Claude) di situs tiruan yang sama: 23 dtk, hanya 2 kartu izin (klik "Lanjut" dan kirim form), data di server tepat, injeksi di langkah 2 diabaikan dan dilaporkan ke pengguna, kolom sandi/telepon dibiarkan kosong. Catatan: `review` pada langkah 2 hanya menampilkan isian halaman itu, bukan langkah 1.
 - Batasan jujur: unggah berkas ditolak (minta pengguna), CAPTCHA tidak diselesaikan agen, iframe domain lain diabaikan, setiap klik minta izin (form multi-langkah = banyak kartu izin), dropdown kustom hanya lewat `klik`. Belum diuji di situs nyata.
 
 ## 6. Pelajaran / kesalahan yang jangan diulang
