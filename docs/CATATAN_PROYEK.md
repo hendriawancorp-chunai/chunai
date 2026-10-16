@@ -24,7 +24,7 @@ menyusun presentasi, membuat media grafis (gambar/video), dan pekerjaan berbasis
 | Operasional (cadangan, audit, batas harian, daftar keamanan) | ✅ | `docs/OPERASIONAL.md` |
 | **Tahap 3: penyesuaian ke pekerjaan pengguna** | ⏳ | lihat bagian 7 |
 
-Terakhir: 140 tes lolos; commit `49a8f96`.
+Terakhir: 148 tes lolos; commit `6a50899` (16 Okt 2026).
 
 ## 3. Arsitektur (modul utama di `src/chunai/`)
 - `agent.py` orkestrator `ChunAI` (hook izin, MCP in-process, konteks waktu, `outbox` untuk `kirim_file`); `agents.py` subagen peneliti/analis.
@@ -49,6 +49,15 @@ Terakhir: 140 tes lolos; commit `49a8f96`.
 Windows dengan WSL2 Ubuntu; Python 3.14 di dalam WSL; kode di `~/chunai` (diperbarui dari **ZIP GitHub**, bukan git):
 `cp -r /mnt/c/Users/<NAMA>/Downloads/chunai-main/. ~/chunai/` (`.env`, `.venv`, `data/` tidak tertimpa). Bot Telegram: `@ChunAI_Assistant_bot`.
 Jalankan: `cd ~/chunai && ./scripts/run.sh` (biarkan jendela terbuka). Setiap jendela Ubuntu baru: `source .venv/bin/activate`.
+
+## 5b. Uji lanjutan 16 Oktober 2026 (tugas nyata riset → kajian → presentasi → kirim file)
+- Dua kali dijalankan dengan agen asli lewat lapisan sesi: 152 dtk/$0,52 → setelah perbaikan 57 dtk/$0,21. File final terkirim, tanpa versi perantara.
+- Klaim bersumber halaman primer Anthropic cocok dengan sumbernya (diperiksa sendiri). Temuan: agen sempat menulis "menurut dokumentasi resmi" untuk
+  halaman yang TIDAK bisa dibuka (cuplikan pencarian). Perbaikan: hook WebFetch mencatat `fetch_log` (ok/gagal) + audit `source_opened/source_failed`;
+  `buat_dokumen/periksa_dokumen` menampilkan "PERHATIAN SUMBER"; prompt mewajibkan subbagian "Keterbatasan". Setelah perbaikan agen jujur dan menulis keterbatasan.
+- Agen sempat men-grep kode ChunAI untuk mencari skema slide dan mengirim referensi berbentuk objek: skema kini ada di deskripsi `buat_presentasi`,
+  referensi objek dinormalkan menjadi string APA.
+- `modelcontextprotocol.io` tidak terjangkau dari sesi cloud (DNS/proxy); di komputer pengguna tidak dibatasi.
 
 ## 6. Pelajaran / kesalahan yang jangan diulang
 - Blok multi-baris yang ditempel merusak `read -rsp` → beri **satu baris per kali**; kini `chunai auth` dan `chunai setup-telegram` otomatis.
