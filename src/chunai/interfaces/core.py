@@ -3,6 +3,7 @@ Telegram dan Web hanya perlu mengimplementasikan Channel."""
 from __future__ import annotations
 
 import asyncio
+import logging
 import re
 import secrets
 import time
@@ -13,6 +14,8 @@ from typing import Awaitable, Callable, Protocol
 from ..approval import ApprovalRequest, ApprovalResult
 from ..timeutil import now
 from ..usage import day_cost, daily_limit
+
+log = logging.getLogger(__name__)
 
 # Folder internal yang TIDAK pernah dikirim otomatis (unggahan pengguna, tangkapan layar review, pratinjau, sementara)
 SKIP_DIRS = {".tmp", ".mpl", "masukan", "review", "pratinjau", "frames", "__pycache__", "node_modules"}
@@ -197,6 +200,13 @@ class Session:
         if self.task and not self.task.done():
             self.task.cancel()
 
+    async def _say(self, ch, text: str):
+        """Kirim pesan tanpa menggagalkan pekerjaan agen bila jaringan chat sedang putus."""
+        try:
+            await ch.send_text(text)
+        except Exception as e:
+            log.warning("pesan tidak terkirim ke chat (%s)", type(e).__name__)
+
     async def turn(self, text: str):
         ch = self.channel
         assert ch is not None
@@ -208,7 +218,7 @@ class Session:
                 async for chunk in self.agent.ask(text):
                     if chunk.strip():
                         said.append(chunk)
-                        await ch.send_text(chunk)
+                        await self._say(ch, chunk)
                 chosen = drain_outbox(self.agent, self.workdir)                # pilihan EKSPLISIT agen (kirim_file)
                 files = chosen or pick_deliverables(changed_since(self.workdir, before), " ".join(said))
                 for f in files[:MAX_FILES_PER_TURN]:
@@ -221,7 +231,7 @@ class Session:
             except asyncio.CancelledError:
                 await ch.send_text("⏹ Dihentikan.")
             except Exception as e:  # jangan membocorkan detail internal berlebihan
-                await ch.send_text(f"⚠ Terjadi kesalahan: {type(e).__name__}: {str(e)[:200]}")
+                await self._say(ch, f"⚠ Terjadi kesalahan: {type(e).__name__}: {str(e)[:200] or '(tanpa pesan; biasanya koneksi internet/DNS terputus)'}")
 
     async def _notify(self, msg: str):
         if self.channel is not None:

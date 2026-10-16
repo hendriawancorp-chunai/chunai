@@ -143,6 +143,7 @@ schtasks /Create /SC ONLOGON /TN "ChunAI" /TR "powershell -WindowStyle Hidden -F
 | ❌ Otentikasi Claude | Ulangi Langkah 4. Pastikan baris di `.env` tidak diawali `#`, tanpa spasi, tanpa tanda kutip, dan token tidak terpotong. `chunai doctor` menampilkan panjang token dan peringatan bentuknya (tanpa membuka isinya). |
 | ❌ Uji nyata Claude | Baca alasan di barisnya (token ditolak, kuota habis, dll.). Diagnosis langsung: `set -a; . ./.env; set +a; .venv/lib/python3*/site-packages/claude_agent_sdk/_bundled/claude -p "Balas satu kata: siap"` |
 | ❌ Chromium | `python -m playwright install chromium` lalu `sudo $(which python) -m playwright install-deps chromium` |
+| Telegram: "ConnectError" / "Tidak bisa terhubung ke Telegram" | Koneksi komputer ke api.telegram.org terputus (internet, VPN, DNS WSL, komputer baru bangun dari tidur). ChunAI kini mencoba ulang 3x otomatis. Bila terus: `chunai telegram-check`, lalu di PowerShell `wsl --shutdown` dan buka Ubuntu lagi; matikan VPN; cek `cat /etc/resolv.conf`. |
 | Bot Telegram diam | Cek `data/logs/chunai.log`. Pastikan komputer tidak tidur dan terminal/skrip masih berjalan. |
 | Log: "Conflict ... other instance" | Ada dua ChunAI berjalan dengan token yang sama. Tutup yang lain. |
 | Web tidak terbuka di `localhost:8787` | Pastikan `run.sh` berjalan; tutup program lain yang memakai port 8787. |

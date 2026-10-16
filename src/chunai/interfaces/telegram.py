@@ -76,14 +76,23 @@ class TelegramBot:
         self.base = base_url.rstrip("/")
         self.client = client or httpx.AsyncClient(timeout=poll_timeout + 15)
         self.poll_timeout, self.offset, self._stop = poll_timeout, 0, False
+        self.connect_retries = 3
 
     # ---------- API ----------
     async def api(self, method: str, data: dict | None = None, files: dict | None = None):
         url = f"{self.base}/bot{self.token}/{method}"
-        if files:
-            r = await self.client.post(url, data={k: v for k, v in (data or {}).items()}, files=files)
-        else:
-            r = await self.client.post(url, json=data or {})
+        for attempt in range(self.connect_retries + 1):
+            try:
+                if files:
+                    r = await self.client.post(url, data={k: v for k, v in (data or {}).items()}, files=files)
+                else:
+                    r = await self.client.post(url, json=data or {})
+                break
+            except (httpx.ConnectError, httpx.ConnectTimeout) as e:      # gagal SEBELUM terkirim -> aman diulang (tanpa pesan ganda)
+                if attempt >= self.connect_retries:
+                    raise RuntimeError(f"Tidak bisa terhubung ke Telegram ({type(e).__name__}). Periksa internet/VPN/DNS komputer Anda.") from None
+                log.warning("koneksi ke Telegram gagal (%s); mencoba lagi (%d/%d)", type(e).__name__, attempt + 1, self.connect_retries)
+                await asyncio.sleep(min(2 ** attempt, 8))
         try:
             js = r.json()
         except ValueError:
@@ -140,7 +149,7 @@ class TelegramBot:
                 elif "Unauthorized" in msg:
                     raise RuntimeError("Token Telegram ditolak (Unauthorized). Periksa CHUNAI_TELEGRAM_TOKEN.") from None
                 else:
-                    log.warning("polling gagal: %s", msg.replace(self.token, "***"))
+                    log.warning("polling gagal: %s", (msg or type(e).__name__).replace(self.token, "***"))
                 await asyncio.sleep(backoff)
                 backoff = min(backoff * 2, 30)
 
