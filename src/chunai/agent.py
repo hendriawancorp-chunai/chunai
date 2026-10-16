@@ -43,8 +43,10 @@ class ChunAI:
 
     async def _preview_open(self, tool_input: dict) -> str:
         from urllib.parse import urlparse
-        host = urlparse(str(tool_input.get("url", ""))).hostname or "?"
-        return (f"SITUS BARU: {host}\nSetuju = izinkan situs ini untuk sesi ini. ♾ Selalu = simpan permanen (tidak ditanya lagi).\n"
+        url = str(tool_input.get("url", ""))
+        host = urlparse(url).hostname or "?"
+        warn = "\n⚠ Nama situs memakai karakter khusus (xn--): periksa, bisa situs tiruan." if "xn--" in host else ""
+        return (f"SITUS BARU: {host}\nAlamat lengkap: {url[:200]}\nPastikan alamat ini benar dan memang situs yang Anda maksud.{warn}\nSetuju = izinkan situs ini untuk sesi ini. ♾ Selalu = simpan permanen (tidak ditanya lagi).\n"
                 "Mengisi dan mengirim form di situs ini tetap selalu meminta izin Anda.")
 
     def _domain_added(self, host: str, permanent: bool):
