@@ -41,6 +41,7 @@ class ApprovalGate:
     allowed_domains: set[str] = field(default_factory=set)
     # pratinjau berbasis kondisi NYATA (mis. isi form dibaca dari halaman), bukan klaim agen
     previewers: dict[str, Callable[[dict], Awaitable[str]]] = field(default_factory=dict)
+    click_probe: Callable[[dict], Awaitable[bool]] | None = None   # True = klik navigasi/pilihan aman (tanpa kartu)
     on_domain: Callable[[str, bool], None] | None = None   # (host, permanen) saat pengguna mengizinkan situs baru
 
     async def check(self, tool: str, tool_input: dict) -> ApprovalResult:
@@ -53,6 +54,14 @@ class ApprovalGate:
         if decision is Decision.AUTO or always_ok:
             self.audit.record("auto_allowed", tool=tool)
             return ApprovalResult(True)
+
+        if tool == "mcp__chunai__klik" and self.click_probe:
+            try:
+                if await self.click_probe(tool_input):
+                    self.audit.record("auto_allowed", tool=tool, kind="navigasi/pilihan", input=tool_input)
+                    return ApprovalResult(True)
+            except Exception:
+                pass          # ragu -> tanya pengguna
 
         summary = summarize(tool, tool_input)
         if tool in self.previewers:

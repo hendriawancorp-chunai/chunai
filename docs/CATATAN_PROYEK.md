@@ -71,6 +71,11 @@ Tanpa setelan manual per situs. `buka_halaman` ke situs baru memunculkan kartu "
 Tetap: alamat internal/privat DITOLAK (localhost, IP privat, .local; hanya nama/IP, tanpa DNS), klik/kirim form selalu minta izin, redirect/iframe ke domain belum diizinkan diblokir,
 sandi/OTP tidak diisi. Entri manual di allowlist (mis. 127.0.0.1 untuk uji) tetap berlaku.
 
+## 5e. Klik navigasi tanpa kartu (16 Okt 2026, disetujui pengguna)
+`policy.click_is_safe`: pilih opsi/centang, tab, tautan http(s), tombol Lanjut/Next/Berikutnya/Kembali berjalan tanpa kartu (tercatat di audit). Gagal-tertutup: tombol lain,
+teks Kirim/Selesai/Bayar/Hapus/Simpan/Keluar/Kumpulkan/Masuk dst., role switch, dan galat apa pun tetap minta kartu. `kirim_form` selalu kartu. Uji agen asli: kartu 2 → 1.
+Catatan risiko: tombol "Lanjut" pada wizard bisa mengirim data antar-langkah ke server (bukan pengiriman akhir). Aturan ujian di prompt: kerjakan survei/latihan/kuis buatan sendiri; ujian resmi yang melarang bantuan → tanya konteks.
+
 ## 6. Pelajaran / kesalahan yang jangan diulang
 - Blok multi-baris yang ditempel merusak `read -rsp` → beri **satu baris per kali**; kini `chunai auth` dan `chunai setup-telegram` otomatis.
 - `cp -r SRC ~/chunai` ke folder yang sudah ada membuat folder bertingkat → pakai `cp -r SRC/. ~/chunai/`.

@@ -287,6 +287,10 @@ class WebSession:
             raise WebError(f"Elemen [{idx}] ({tag}) bukan kolom isian.")
         return f"[{idx}] \"{e.get('label', '')}\" diisi."
 
+    def click_is_safe(self, idx: int) -> bool:
+        from .policy import click_is_safe
+        return click_is_safe(self._el(idx))
+
     async def describe(self, idx: int) -> str:
         e = self._el(idx)
         extra = f" → {e['href']}" if e.get("href") else ""

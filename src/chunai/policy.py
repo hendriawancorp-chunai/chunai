@@ -100,6 +100,32 @@ def is_safe_readonly_bash(command: str) -> bool:
     return True
 
 
+_FINAL_TEXT = re.compile(
+    r"(kirim|submit|selesai|finish|bayar|pay|checkout|hapus|delete|remove|konfirmasi|confirm|simpan|save|setuju|agree|daftar|register|sign ?up|"
+    r"pesan|order|beli|buy|publish|terbitkan|send|post|ajukan|apply|log ?out|sign ?out|keluar|unggah|upload|donasi|donate|transfer|batalkan|cancel|akhiri|end|"
+    r"serahkan|turn in|kumpulkan|masuk|login|sign ?in)", re.I)
+_NAV_TEXT = re.compile(r"^\W*((lanjut(kan)?|next|continue)( ke| to)?[\w ]{0,30}|berikutnya|selanjutnya|sebelumnya|previous|prev|kembali|back)\W*$", re.I)
+_SAFE_ROLES = {"option", "tab", "combobox", "menuitem", "radio", "checkbox"}
+
+
+def click_is_safe(e: dict) -> bool:
+    """Klik NAVIGASI/pemilihan yang tidak mengirim atau mengubah data (pilih opsi, tab, tautan biasa, Lanjut/Berikutnya).
+    Gagal-tertutup: apa pun yang meragukan (tombol lain, teks Kirim/Selesai/Bayar/Hapus/Simpan/Keluar, dst.) tetap minta izin."""
+    label = str(e.get("label", ""))
+    tag, typ, role = e.get("tag", ""), e.get("type", ""), e.get("role", "")
+    if _FINAL_TEXT.search(label):
+        return False
+    if tag == "input" and typ in ("radio", "checkbox"):
+        return True
+    if role in _SAFE_ROLES:
+        return True
+    if tag == "a" and str(e.get("href", "")).lower().startswith(("http://", "https://")):
+        return True
+    if tag == "button" or typ in ("button", "submit") or role == "button":
+        return bool(_NAV_TEXT.match(label))
+    return False
+
+
 def classify(tool_name: str, tool_input: dict | None = None, allowed_domains: set[str] | None = None) -> Decision:
     tool_input = tool_input or {}
     if tool_name == WEB_OPEN_TOOL:

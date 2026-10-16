@@ -30,6 +30,7 @@ class ChunAI:
         if web:
             self.gate.allowed_domains = set(web.allowed_domains)
             self.gate.on_domain = self._domain_added
+            self.gate.click_probe = self._click_probe
             self.gate.previewers = {
                 "mcp__chunai__buka_halaman": self._preview_open,
                 "mcp__chunai__klik": lambda i: self.web.describe(int(i["index"])),
@@ -48,6 +49,9 @@ class ChunAI:
         warn = "\n⚠ Nama situs memakai karakter khusus (xn--): periksa, bisa situs tiruan." if "xn--" in host else ""
         return (f"SITUS BARU: {host}\nAlamat lengkap: {url[:200]}\nPastikan alamat ini benar dan memang situs yang Anda maksud.{warn}\nSetuju = izinkan situs ini untuk sesi ini. ♾ Selalu = simpan permanen (tidak ditanya lagi).\n"
                 "Mengisi dan mengirim form di situs ini tetap selalu meminta izin Anda.")
+
+    async def _click_probe(self, tool_input: dict) -> bool:
+        return self.web.click_is_safe(int(tool_input["index"]))
 
     def _domain_added(self, host: str, permanent: bool):
         self.web.cfg.allowed_domains.add(host)
