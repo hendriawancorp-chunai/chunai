@@ -98,6 +98,13 @@ Catatan risiko: tombol "Lanjut" pada wizard bisa mengirim data antar-langkah ke 
    pengguna (.pptx/.docx), jalankan `pytest` di Python 3.14 pada mesin pengguna, uji akun Telegram lain ditolak di Telegram asli,
    Dockerfile + VPS bila perlu 24 jam, memori profil pengguna (nama/jabatan; jangan dikarang).
 
+## 7a. Posisi terakhir (16 Okt 2026, akhir sesi)
+- Selesai dan ter-push: Web Agent (cookie sesi, iframe, role, deteksi CAPTCHA/login, tolak unggah berkas), izin per situs lewat kartu "SITUS BARU", klik navigasi tanpa kartu, aturan kuis diperlonggar. 163 tes lolos.
+- Pengguna sudah memasang versi terbaru; tes kartu situs baru di Telegram asli berjalan baik. Antarmuka Web: http://localhost:8787 (token `CHUNAI_WEB_TOKEN`).
+- Login situs: manual oleh pengguna (`chunai login <alamat>`; butuh WSLg/Win11, atau mode CDP dengan Chrome sendiri; panduan CDP belum ditulis).
+- Belum teruji: Web Agent di situs nyata (Wayground `wayground.com/admin/quiz/...`; diblokir proxy cloud, harus diuji di komputer pengguna), mode CDP, akun Telegram lain ditolak, pytest di Python 3.14 pengguna.
+- Berikutnya: (1) pengguna mencoba satu pekerjaan web nyata lalu kirim jawaban agen + `tail -30 data/logs/chunai.log` (tanpa rahasia); (2) panduan login via CDP; (3) fase evaluasi 1-2 minggu (`docs/EVALUASI_2_MINGGU.md`), lalu Tahap 3 (tema/logo), keputusan server 24 jam.
+
 ## 7b. Fase evaluasi (disepakati 16 Okt 2026)
 Pengguna memakai ChunAI 1–2 minggu di komputernya (langganan, tanpa biaya tambahan), mencatat tugas dan masalah sesuai `docs/EVALUASI_2_MINGGU.md`.
 Saat kembali: minta hasil `chunai audit 300` + catatan, jawab 7 pertanyaan evaluasi, lalu susun prioritas (Tahap 3, VPS/API, perbaikan kualitas).
