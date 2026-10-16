@@ -12,7 +12,7 @@ from .. import data as D
 from ..resources import run_heavy
 from .deckbuild import build_pptx
 from .docbuild import build_docx
-from .doccheck import lint_doc_spec
+from .doccheck import attention_text, lint_doc_spec, normalize_spec, source_attention
 from .render import to_pdf, to_pngs
 from .theme import load_theme
 
@@ -44,7 +44,7 @@ def _name(n: str, default: str) -> str:
     return re.sub(r"[^\w-]", "_", n or default)[:50] or default
 
 
-def office_tools(workdir: Path, themes_dir: str = "data/themes"):
+def office_tools(workdir: Path, themes_dir: str = "data/themes", fetch_log: dict | None = None):
     workdir = workdir.resolve()
     out = workdir / "output"
 
@@ -58,7 +58,7 @@ def office_tools(workdir: Path, themes_dir: str = "data/themes"):
           {"spec": dict, "name": str, "theme": str, "pdf": bool})
     async def buat_dokumen(args):
         try:
-            spec = args["spec"]
+            spec = normalize_spec(args["spec"])
             theme = load_theme(args.get("theme") or None, themes_dir)
             path = _unique(out / f"{_name(args.get('name'), 'kajian')}.docx")
             build_docx(spec, path, theme, workdir)
@@ -68,13 +68,24 @@ def office_tools(workdir: Path, themes_dir: str = "data/themes"):
                 msgs.append(f"PDF: {(await run_heavy(to_pdf, path, out)).relative_to(workdir)}")
             issues = lint_doc_spec(spec)
             msgs.append("Pemeriksaan sitasi: LOLOS" if not issues else "Pemeriksaan sitasi PERLU PERBAIKAN:\n- " + "\n- ".join(issues))
+            att = attention_text(source_attention(spec, fetch_log))
+            if att:
+                msgs.append(att)
             return ok("\n".join(msgs))
         except Exception as e:
             return err(f"Gagal membuat dokumen: {type(e).__name__}: {e}")
 
     @tool("buat_presentasi",
-          "Susun PPTX 16:9 dari spesifikasi JSON {slides:[...]}. kind: cover|ringkasan|kolom|tabel|grafik|proses|teks|penutup. "
-          "Judul slide = topik; 'subtitle' = KALIMAT PESAN. Chart native dapat diedit. Hasil di output/.",
+          "Susun PPTX 16:9 dari spesifikasi JSON {slides:[...]}. Judul slide = topik; 'subtitle' = KALIMAT PESAN. Chart native dapat diedit. "
+          "Kosongkan 'theme' (tema bawaan); JANGAN menebak nama tema. Hasil di output/. Setiap slide wajib punya 'kind' dan field-nya:\n"
+          "- cover {title, kicker?, pills?[], label?, org?, year?, tagline?}\n"
+          "- ringkasan {title, subtitle, kpis?[{v,l}], cards?[{h,t}], panel?{h, items[{tag,h,s?}], note?}} (hanya kpis -> KPI besar)\n"
+          "- kolom {title, subtitle, columns[{h, sub?, items[]}], band?}\n"
+          "- tabel {title, subtitle, header[], rows[[]], widths?[], highlight?[idx baris], note?}\n"
+          "- grafik {title, subtitle, chart{type:bar|line|barh, categories[], series[{name,values[]}], title?, highlight?, number_format?}, "
+          "kpis?[{v,l}], side_table?{header,rows,widths?}, note?}\n"
+          "- proses {title, subtitle, steps[{h, sub?, lead?, items[]}], band?, side?{h, stats[{v,l}], note?}}\n"
+          "- teks {title, subtitle?, bullets[]}   - penutup {title, subtitle?, bullets[], highlight?}",
           {"spec": dict, "name": str, "theme": str})
     async def buat_presentasi(args):
         try:
@@ -92,8 +103,10 @@ def office_tools(workdir: Path, themes_dir: str = "data/themes"):
     @tool("periksa_dokumen", "Periksa spesifikasi dokumen (JSON) untuk sitasi/daftar pustaka/caption sebelum dibuat.",
           {"spec": dict})
     async def periksa_dokumen(args):
-        issues = lint_doc_spec(args["spec"])
-        return ok("LOLOS" if not issues else "PERLU PERBAIKAN:\n- " + "\n- ".join(issues))
+        spec = normalize_spec(args["spec"])
+        issues = lint_doc_spec(spec)
+        att = attention_text(source_attention(spec, fetch_log))
+        return ok(("LOLOS" if not issues else "PERLU PERBAIKAN:\n- " + "\n- ".join(issues)) + (("\n" + att) if att else ""))
 
     @tool("pratinjau_file",
           "Render DOCX/PPTX/PDF di workspace menjadi gambar PNG (folder pratinjau/) agar bisa diperiksa secara visual. "

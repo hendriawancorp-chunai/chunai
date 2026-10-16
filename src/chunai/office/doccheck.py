@@ -57,3 +57,67 @@ def lint_doc_spec(spec: dict) -> list[str]:
         if "figure" in b and not b["figure"].get("caption"):
             issues.append("Ada gambar tanpa keterangan (caption).")
     return issues
+
+
+def _norm(url: str) -> str:
+    u = re.sub(r"^https?://(www\.)?", "", url.strip().lower())
+    return u.split("#")[0].rstrip("/")
+
+
+def reference_urls(spec: dict) -> list[str]:
+    out = []
+    for r in spec.get("references", []):
+        out += re.findall(r"https?://[^\s)>\]]+", r)
+    return out
+
+
+def source_attention(spec: dict, fetch_log: dict[str, str] | None) -> list[str]:
+    """Daftar pustaka yang URL-nya TIDAK pernah berhasil dibuka agen (gagal/tidak dibuka). Bukan galat keras: sumber
+    boleh berasal dari data pengguna. Tetapi klaim 'menurut sumber' tanpa membuka sumbernya harus diberi catatan."""
+    if fetch_log is None:
+        return []
+    ok = {_norm(u) for u, st in fetch_log.items() if st == "ok"}
+    failed = {_norm(u) for u, st in fetch_log.items() if st == "gagal"}
+    notes = []
+    for u in reference_urls(spec):
+        n = _norm(u)
+        if any(n == o or n.startswith(o) or o.startswith(n) for o in ok):
+            continue
+        status = "GAGAL dibuka" if any(n == f or n.startswith(f) or f.startswith(n) for f in failed) else "tidak pernah dibuka"
+        notes.append(f"Sumber {status}: {u}")
+    return notes
+
+
+def attention_text(notes: list[str]) -> str:
+    if not notes:
+        return ""
+    return ("PERHATIAN SUMBER (bukan galat, tetapi wajib ditangani):\n- " + "\n- ".join(notes) +
+            "\nAturan: untuk sumber yang gagal/tidak dibuka JANGAN menulis 'menurut dokumentasi/sumber resmi' atau angka/rincian yang hanya "
+            "berasal dari cuplikan pencarian. Buka sumbernya, atau tandai klaimnya 'belum terverifikasi dari sumber primer' dan cantumkan di "
+            "subbagian 'Keterbatasan'. Abaikan peringatan ini hanya bila datanya memang diberikan pengguna.")
+
+
+def reference_to_text(r) -> str:
+    """Terima referensi berbentuk string ATAU objek {author(s), year, title, source/publisher/journal, url/doi} -> string gaya APA."""
+    if isinstance(r, str):
+        return r
+    if not isinstance(r, dict):
+        return str(r)
+    g = lambda *k: next((str(r[x]).strip() for x in k if r.get(x)), "")
+    authors = r.get("authors") or r.get("author") or r.get("penulis") or ""
+    if isinstance(authors, list):
+        authors = ", ".join(str(a) for a in authors)
+    parts = [str(authors).strip().rstrip(".") + "." if authors else "",
+             f"({g('year', 'tahun', 'date', 'tanggal') or 't.t.'}).",
+             g("title", "judul").rstrip(".") + "." if g("title", "judul") else "",
+             g("source", "publisher", "journal", "sumber", "penerbit").rstrip(".") + "." if g("source", "publisher", "journal", "sumber", "penerbit") else "",
+             g("url", "link", "doi")]
+    return " ".join(x for x in parts if x)
+
+
+def normalize_spec(spec: dict) -> dict:
+    """Salinan spesifikasi dengan references dinormalkan ke string."""
+    out = dict(spec)
+    if "references" in out:
+        out["references"] = [reference_to_text(r) for r in (out["references"] or [])]
+    return out

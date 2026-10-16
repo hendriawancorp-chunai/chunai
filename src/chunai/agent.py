@@ -33,6 +33,7 @@ class ChunAI:
                 "mcp__chunai__klik": lambda i: self.web.describe(int(i["index"])),
                 "mcp__chunai__kirim_form": self._preview_submit,
             }
+        self.fetch_log: dict[str, str] = {}   # url -> "ok" | "gagal" (dari hook WebFetch; dipakai pemeriksa sumber)
         self.outbox: list[Path] = []          # file yang diminta agen (kirim_file) untuk dikirim ke pengguna
         self.model = model
         self.max_budget_usd = max_budget_usd
@@ -63,13 +64,29 @@ class ChunAI:
             out["permissionDecisionReason"] = result.note or "Ditolak oleh pengguna."
         return {"hookSpecificOutput": out}
 
+    async def _post_fetch_hook(self, input_data, tool_use_id, context):
+        url = str((input_data.get("tool_input") or {}).get("url", ""))
+        if url:
+            self.fetch_log[url] = "ok"
+            self.audit.record("source_opened", url=url[:200])
+        return {}
+
+    async def _post_fetch_fail_hook(self, input_data, tool_use_id, context):
+        url = str((input_data.get("tool_input") or {}).get("url", ""))
+        if url:
+            self.fetch_log[url] = "gagal"
+            self.audit.record("source_failed", url=url[:200], error=str(input_data.get("error", ""))[:120])
+        return {}
+
     def _options(self) -> ClaudeAgentOptions:
         return ClaudeAgentOptions(
             system_prompt=SYSTEM_PROMPT,
             agents=SUBAGENTS,
             cwd=str(self.workdir),
-            mcp_servers={"chunai": build_server(self.workdir, self.web, self.outbox)},
-            hooks={"PreToolUse": [HookMatcher(hooks=[self._pre_tool_hook])]},
+            mcp_servers={"chunai": build_server(self.workdir, self.web, self.outbox, self.fetch_log)},
+            hooks={"PreToolUse": [HookMatcher(hooks=[self._pre_tool_hook])],
+                   "PostToolUse": [HookMatcher(matcher="WebFetch", hooks=[self._post_fetch_hook])],
+                   "PostToolUseFailure": [HookMatcher(matcher="WebFetch", hooks=[self._post_fetch_fail_hook])]},
             can_use_tool=self._can_use_tool,
             permission_mode="default",
             model=self.model,
@@ -103,7 +120,8 @@ class ChunAI:
                     if isinstance(block, TextBlock):
                         yield block.text
                     elif isinstance(block, ToolUseBlock):
-                        extra = {"path": str(block.input.get("path", ""))[:200]} if block.name.endswith("kirim_file") else {}
+                        extra = {"path": str(block.input.get("path", ""))[:200]} if block.name.endswith("kirim_file") else \
+                            {"query": str(block.input.get("query", ""))[:120]} if block.name == "WebSearch" else {}
                         self.audit.record("tool_use", tool=block.name, **extra)
             elif isinstance(msg, ResultMessage):
                 self.audit.record("turn_done", cost_usd=getattr(msg, "total_cost_usd", None))

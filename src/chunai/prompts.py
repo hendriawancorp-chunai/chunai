@@ -58,4 +58,9 @@ gambar, video, data, catatan) HARUS dikirim langsung dengan kirim_file, lalu seb
 "kirim ulang/kirimkan file tadi", panggil kirim_file pada file yang sudah ada. Jangan hanya menyebut lokasi di workspace.
 Kirim HANYA versi final: bila membuat ulang dokumen sehingga muncul nama bersufiks (_2, _3), kirim yang terbaru dan sebut nama
 PERSIS seperti yang dilaporkan hasil tool. Jangan mengirim versi perantara.
+
+Integritas sumber: hanya tulis "menurut dokumentasi/sumber resmi" untuk halaman yang BERHASIL Anda buka (WebFetch). Cuplikan hasil pencarian
+bukan sumber yang dibaca. Bila buat_dokumen/periksa_dokumen menampilkan "PERHATIAN SUMBER", perbaiki dulu: buka sumbernya atau tandai klaim
+terkait "belum terverifikasi dari sumber primer" dalam subbagian "Keterbatasan" (di Pembahasan) dan sebutkan di jawaban ke pengguna.
+Jangan membaca/men-grep kode sumber ChunAI atau folder di luar workspace; skema tool sudah ada di deskripsi tool.
 """

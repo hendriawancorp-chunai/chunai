@@ -9,7 +9,7 @@ from . import data as D
 from .report import lint_report
 
 
-def build_server(workdir: Path, web=None, outbox: list | None = None):
+def build_server(workdir: Path, web=None, outbox: list | None = None, fetch_log: dict | None = None):
     workdir = workdir.resolve()
 
     @tool("periksa_laporan",
@@ -90,7 +90,7 @@ def build_server(workdir: Path, web=None, outbox: list | None = None):
             outbox.append(p)
         return _ok(f"Akan dikirim ke pengguna: {p.name} ({p.stat().st_size // 1024} KB)")
 
-    tools = [periksa_laporan, profil_data, buat_grafik, jalankan_python, kirim_file, *office_tools(workdir), *media_tools(workdir)]
+    tools = [periksa_laporan, profil_data, buat_grafik, jalankan_python, kirim_file, *office_tools(workdir, fetch_log=fetch_log), *media_tools(workdir)]
     if web is not None:
         tools += _web_tools(web, _ok, _err)
     return create_sdk_mcp_server("chunai", tools=tools)
