@@ -5,6 +5,8 @@ from pathlib import Path
 
 from claude_agent_sdk import create_sdk_mcp_server, tool
 
+from .docread_tools import docread_tools
+
 from . import data as D
 from .report import lint_report
 
@@ -116,7 +118,7 @@ def build_server(workdir: Path, web=None, outbox: list | None = None, fetch_log:
         return _ok("Jadwal dihapus." if sch.remove(spath, args.get("id", "")) else "Id jadwal tidak ditemukan.")
 
     tools = [periksa_laporan, profil_data, buat_grafik, jalankan_python, kirim_file, buat_jadwal, daftar_jadwal, hapus_jadwal,
-             *office_tools(workdir, fetch_log=fetch_log), *media_tools(workdir)]
+             *office_tools(workdir, fetch_log=fetch_log), *media_tools(workdir), *docread_tools(workdir)]
     if web is not None:
         tools += _web_tools(web, _ok, _err)
     return create_sdk_mcp_server("chunai", tools=tools)

@@ -92,6 +92,14 @@ tool `buat_jadwal` (kartu izin dengan pratinjau jadwal nyata), `daftar_jadwal`, 
 - Batas: maks 20 jadwal, 10 tugas agen, 1 USD per tugas, 15 menit per tugas, batas harian tetap berlaku, tugas dijalankan satu per satu. Tanpa Telegram: hasil disimpan di `data/sessions/jadwal/workspace/hasil/`.
 - Batas yang jujur: hanya jalan saat komputer dan ChunAI menyala; tidak ada interval di bawah harian untuk tugas; tugas web hanya ke situs yang sudah diizinkan permanen (situs baru = ditolak tanpa kartu).
 
+## 5h. Skill baru #4: ringkas dokumen panjang bersitasi halaman (19 Okt 2026)
+`docread.py` + `docread_tools.py`: `info_berkas`, `baca_berkas` (rentang halaman, penanda `=== hlm N ===`, batas ±12.000 karakter), `cari_berkas`, `periksa_kutipan` (ok / halaman_lain / mirip / tidak_ada),
+subagen `pembaca` (rentang ±40 halaman, paralel). PDF via `pdftotext` (poppler, sudah dipasang `install_wsl.sh`), PPTX per slide (termasuk catatan pembicara dan data grafik), DOCX via konversi LibreOffice
+(nomor halaman mendekati Word), TXT/MD per ±3000 karakter ("bagian"). Isi dokumen dibungkus sebagai DATA + pemindai prompt-injection.
+Uji agen asli: PDF 80 halaman dengan 5 fakta tertanam + 1 injeksi: 51 dtk, dua pembaca paralel, kelima sitasi halaman benar (12, 27, 30, 47, 63), injeksi dilaporkan dan tidak diikuti, periksa_kutipan dipanggil.
+Batas jujur: PDF hasil pindai (tanpa teks) TIDAK terbaca (OCR belum ada; dilaporkan terus terang); tabel di PDF jadi teks tata letak (kolom bisa bergeser); maks 60 MB / 3000 halaman; Telegram membatasi unggahan 20 MB.
+Urutan skill pengguna: 1 revisi dokumen (selesai), 2 jadwal (selesai), 4 ringkas dokumen (selesai), 8 gambar AI gratis (berikutnya; perlu riset penyedia).
+
 ## 6. Pelajaran / kesalahan yang jangan diulang
 - Blok multi-baris yang ditempel merusak `read -rsp` → beri **satu baris per kali**; kini `chunai auth` dan `chunai setup-telegram` otomatis.
 - `cp -r SRC ~/chunai` ke folder yang sudah ada membuat folder bertingkat → pakai `cp -r SRC/. ~/chunai/`.
