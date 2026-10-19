@@ -93,9 +93,11 @@ async def run_telegram() -> None:
         sys.exit("CHUNAI_TELEGRAM_USERS belum diatur. Kirim /id ke bot untuk mengetahui ID Anda, lalu isi variabel ini.")
     mgr = SessionManager(default_agent_factory())
     bot = TelegramBot(token, ids, mgr)
+    sched = asyncio.create_task(_make_scheduler(mgr, bot, ids).run())
     try:
         await bot.run()
     finally:
+        sched.cancel()
         await mgr.close_all()
 
 
@@ -125,6 +127,12 @@ async def run_telegram_check() -> None:
     print("OK. Jalankan: chunai telegram")
 
 
+def _make_scheduler(mgr, bot, ids):
+    from .interfaces.scheduler import Scheduler
+    from .interfaces.telegram import TelegramChannel
+    return Scheduler(mgr, channels=lambda: [TelegramChannel(bot, i) for i in sorted(ids)])
+
+
 async def run_serve() -> None:
     import logging
     import os
@@ -146,8 +154,10 @@ async def run_serve() -> None:
     tasks = [asyncio.create_task(server.serve())]
     tg, ids = os.environ.get("CHUNAI_TELEGRAM_TOKEN"), allowed_ids_from_env()
     if tg and ids:
-        tasks.append(asyncio.create_task(TelegramBot(tg, ids, mgr).run()))
+        bot = TelegramBot(tg, ids, mgr)
+        tasks.append(asyncio.create_task(bot.run()))
         print("Telegram aktif.")
+        tasks.append(asyncio.create_task(_make_scheduler(mgr, bot, ids).run()))
     await asyncio.gather(*tasks)
 
 

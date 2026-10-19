@@ -84,6 +84,14 @@ ketidakkonsistenan di slide 5 dilaporkan, bukan diubah diam-diam). Batas: footer
 Urutan skill yang dipilih pengguna (bertahap): 1 revisi dokumen (SELESAI), 2 pengingat/terjadwal, 4 ringkas dokumen panjang, 8 gambar AI gratis. Memori profil sempat dikerjakan tetapi
 belum diminta: disimpan di `git stash` ("memori-profil-belum-diminta").
 
+## 5g. Skill baru #2: pengingat dan tugas terjadwal (19 Okt 2026)
+Modul `schedule.py` (jadwal murni: sekali/harian/mingguan/bulanan, WIB, penyimpanan `data/schedules.json`), `interfaces/scheduler.py` (penjadwal, jalan di `chunai serve` dan `chunai telegram`),
+tool `buat_jadwal` (kartu izin dengan pratinjau jadwal nyata), `daftar_jadwal`, `hapus_jadwal` (kartu), perintah Telegram `/jadwal`.
+- Pengingat = pesan ke Telegram. Tugas = agen mengerjakan perintah **tanpa pengawasan**: reviewer menolak semua aksi yang butuh izin dan melaporkannya (teruji dengan agen asli: percobaan menulis ke /etc ditolak dan dilaporkan).
+- Jadwal dimajukan SEBELUM dijalankan (paling banyak sekali). Komputer mati: terlambat <= 24 jam tetap dijalankan dengan catatan terlambat; lebih lama dilewati dan dilaporkan.
+- Batas: maks 20 jadwal, 10 tugas agen, 1 USD per tugas, 15 menit per tugas, batas harian tetap berlaku, tugas dijalankan satu per satu. Tanpa Telegram: hasil disimpan di `data/sessions/jadwal/workspace/hasil/`.
+- Batas yang jujur: hanya jalan saat komputer dan ChunAI menyala; tidak ada interval di bawah harian untuk tugas; tugas web hanya ke situs yang sudah diizinkan permanen (situs baru = ditolak tanpa kartu).
+
 ## 6. Pelajaran / kesalahan yang jangan diulang
 - Blok multi-baris yang ditempel merusak `read -rsp` → beri **satu baris per kali**; kini `chunai auth` dan `chunai setup-telegram` otomatis.
 - `cp -r SRC ~/chunai` ke folder yang sudah ada membuat folder bertingkat → pakai `cp -r SRC/. ~/chunai/`.

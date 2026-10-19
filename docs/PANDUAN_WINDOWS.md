@@ -157,6 +157,11 @@ schtasks /Create /SC ONLOGON /TN "ChunAI" /TR "powershell -WindowStyle Hidden -F
 Kirim berkas DOCX atau PPTX ke bot (Telegram) atau unggah di Web, lalu tulis perintahnya, mis. "Di presentasi ini ganti pendapatan 2025 di slide 2 menjadi Rp5,40 T" atau
 "Perbaiki paragraf pertama bab 2 agar lebih ringkas". ChunAI membuat **salinan baru** berakhiran `_rev` dan mengirimkannya; berkas asli tidak diubah. Angka turunan yang tidak konsisten dilaporkan, tidak diubah diam-diam.
 
+## Pengingat dan tugas terjadwal
+Minta lewat chat (Telegram atau Web), mis. "Ingatkan saya setiap Senin 08.00 menyiapkan laporan" atau "Setiap hari 06.30 ringkas berita sektor logistik". Anda akan menerima kartu izin berisi jadwal yang tepat.
+`/jadwal` di Telegram menampilkan daftar; minta "hapus jadwal <id>" untuk menghapus. Hanya berjalan saat komputer dan `run.sh` menyala; jadwal yang terlewat <24 jam dijalankan terlambat, lebih lama dilewati.
+Tugas terjadwal berjalan tanpa Anda: hanya membaca/riset/analisis; aksi yang butuh izin dilewati dan dilaporkan. Untuk situs yang sering dipakai, pilih ♾ Selalu agar tugas terjadwal boleh membukanya.
+
 ## Keamanan singkat
 - Jangan membagikan `.env`, token Claude, token bot, atau token Web.
 - Bot hanya melayani ID Telegram yang Anda daftarkan. Pesan dari orang lain ditolak.

@@ -21,7 +21,8 @@ from .tools import build_server
 class ChunAI:
     def __init__(self, reviewer: Reviewer, workdir: str | Path = "data/workspace",
                  audit_path: str | Path = "data/audit.jsonl", model: str | None = None,
-                 max_budget_usd: float | None = 5.0, web: WebConfig | None = None):
+                 max_budget_usd: float | None = 5.0, web: WebConfig | None = None,
+                 schedule_path: str | Path | None = None):
         self.workdir = Path(workdir).resolve()
         self.workdir.mkdir(parents=True, exist_ok=True)
         self.audit = AuditLog(audit_path)
@@ -36,9 +37,13 @@ class ChunAI:
                 "mcp__chunai__klik": lambda i: self.web.describe(int(i["index"])),
                 "mcp__chunai__kirim_form": self._preview_submit,
             }
+        self.gate.previewers["mcp__chunai__buat_jadwal"] = self._preview_schedule
+        self.gate.previewers["mcp__chunai__hapus_jadwal"] = self._preview_unschedule
         self.fetch_log: dict[str, str] = {}   # url -> "ok" | "gagal" (dari hook WebFetch; dipakai pemeriksa sumber)
         self.outbox: list[Path] = []          # file yang diminta agen (kirim_file) untuk dikirim ke pengguna
         self.model = model
+        from .schedule import default_path as _sp
+        self.schedule_path = Path(schedule_path) if schedule_path else _sp()
         self.max_budget_usd = max_budget_usd
         self._client: ClaudeSDKClient | None = None
 
@@ -65,6 +70,19 @@ class ChunAI:
                         fh.write(("" if not old or old.endswith("\n") else "\n") + host + "\n")
             except OSError:
                 pass
+
+    async def _preview_schedule(self, i: dict) -> str:
+        from . import schedule as sch
+        spec = sch.normalize_spec(i)
+        nxt = sch.next_run(spec, sch.now())
+        what = "kirim pesan pengingat" if str(i.get("jenis")) == "pengingat" else "agen mengerjakan perintah TANPA pengawasan (aksi butuh izin dilewati)"
+        return (f"JADWAL BARU: {i.get('nama', '')}\nKapan: {sch.render_spec(spec)}\nBerikutnya: {sch.describe(nxt) if nxt else 'sudah lewat!'}\n"
+                f"Jenis: {what}\nIsi: {i.get('isi', '')}\nHanya jalan saat komputer dan ChunAI menyala; hasil dikirim ke Telegram.")
+
+    async def _preview_unschedule(self, i: dict) -> str:
+        from . import schedule as sch
+        t = next((x for x in sch.load(self.schedule_path) if x["id"] == str(i.get("id", "")).strip().lower()), None)
+        return f"Hapus jadwal: {t['nama']} ({sch.render_spec(t['jadwal'])})" if t else "(id jadwal tidak ditemukan)"
 
     async def _preview_submit(self, tool_input: dict) -> str:
         return f"{await self.web.describe(int(tool_input['index']))}\n{await self.web.review()}"
@@ -110,7 +128,7 @@ class ChunAI:
             system_prompt=SYSTEM_PROMPT,
             agents=SUBAGENTS,
             cwd=str(self.workdir),
-            mcp_servers={"chunai": build_server(self.workdir, self.web, self.outbox, self.fetch_log)},
+            mcp_servers={"chunai": build_server(self.workdir, self.web, self.outbox, self.fetch_log, self.schedule_path)},
             hooks={"PreToolUse": [HookMatcher(hooks=[self._pre_tool_hook])],
                    "PostToolUse": [HookMatcher(matcher="WebFetch", hooks=[self._post_fetch_hook])],
                    "PostToolUseFailure": [HookMatcher(matcher="WebFetch", hooks=[self._post_fetch_fail_hook])]},

@@ -21,7 +21,7 @@ class Decision(str, Enum):
 READ_ONLY_TOOLS = {
     "Read", "Glob", "Grep", "WebSearch", "WebFetch",
     "TodoWrite", "Task", "Agent", "ListMcpResources", "ReadMcpResource", "ToolSearch",
-    "mcp__chunai__periksa_laporan", "mcp__chunai__profil_data",
+    "mcp__chunai__periksa_laporan", "mcp__chunai__profil_data", "mcp__chunai__daftar_jadwal",
     "mcp__chunai__buat_dokumen", "mcp__chunai__buat_presentasi",    # hanya menulis file baru di workspace/output/
     "mcp__chunai__periksa_dokumen", "mcp__chunai__pratinjau_file",
     "mcp__chunai__baca_dokumen", "mcp__chunai__revisi_dokumen",       # revisi menulis SALINAN baru di output/, tidak menimpa   # tidak menimpa file

@@ -9,7 +9,7 @@ from . import data as D
 from .report import lint_report
 
 
-def build_server(workdir: Path, web=None, outbox: list | None = None, fetch_log: dict | None = None):
+def build_server(workdir: Path, web=None, outbox: list | None = None, fetch_log: dict | None = None, schedule_path: Path | None = None):
     workdir = workdir.resolve()
 
     @tool("periksa_laporan",
@@ -90,7 +90,33 @@ def build_server(workdir: Path, web=None, outbox: list | None = None, fetch_log:
             outbox.append(p)
         return _ok(f"Akan dikirim ke pengguna: {p.name} ({p.stat().st_size // 1024} KB)")
 
-    tools = [periksa_laporan, profil_data, buat_grafik, jalankan_python, kirim_file, *office_tools(workdir, fetch_log=fetch_log), *media_tools(workdir)]
+    from . import schedule as sch
+    spath = Path(schedule_path) if schedule_path else sch.default_path()
+
+    @tool("buat_jadwal",
+          "Buat pengingat atau tugas terjadwal (waktu zona pengguna, WIB). HANYA bila pengguna memintanya secara eksplisit. "
+          "jenis='pengingat' (kirim pesan 'isi') atau 'tugas' (agen mengerjakan perintah 'isi' tanpa pengawasan: hanya baca/riset/analisis; aksi butuh izin dilewati). "
+          "tipe: sekali (butuh tanggal YYYY-MM-DD) | harian | mingguan (butuh hari, mis. 'senin' atau 'senin,kamis') | bulanan (butuh tgl 1-28). waktu 'JJ:MM'. "
+          "Berjalan hanya saat komputer dan ChunAI menyala; hasil dikirim ke Telegram. Minta izin pengguna.",
+          {"nama": str, "jenis": str, "isi": str, "tipe": str, "waktu": str, "tanggal": str, "hari": str, "tgl": int})
+    async def buat_jadwal(args):
+        try:
+            spec = sch.normalize_spec(args)
+            t = sch.add(spath, args.get("nama", ""), args.get("jenis", ""), args.get("isi", ""), spec)
+        except sch.ScheduleError as e:
+            return _err(str(e))
+        return _ok(f"Jadwal dibuat [{t['id']}]: {sch.render_spec(spec)}. Berikutnya: {sch.describe(sch.parse_dt(t['berikutnya']))}.")
+
+    @tool("daftar_jadwal", "Tampilkan semua pengingat/tugas terjadwal beserta waktu berikutnya.", {})
+    async def daftar_jadwal(args):
+        return _ok(sch.render_list(sch.load(spath)))
+
+    @tool("hapus_jadwal", "Hapus satu jadwal berdasarkan id (dari daftar_jadwal). Minta izin pengguna.", {"id": str})
+    async def hapus_jadwal(args):
+        return _ok("Jadwal dihapus." if sch.remove(spath, args.get("id", "")) else "Id jadwal tidak ditemukan.")
+
+    tools = [periksa_laporan, profil_data, buat_grafik, jalankan_python, kirim_file, buat_jadwal, daftar_jadwal, hapus_jadwal,
+             *office_tools(workdir, fetch_log=fetch_log), *media_tools(workdir)]
     if web is not None:
         tools += _web_tools(web, _ok, _err)
     return create_sdk_mcp_server("chunai", tools=tools)

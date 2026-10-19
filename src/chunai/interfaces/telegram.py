@@ -17,7 +17,8 @@ log = logging.getLogger("chunai.telegram")
 MAX_MSG = 3900
 HELP = ("Saya ChunAI. Kirim perintah kerja (riset, analisis, kajian, presentasi, tugas web).\n"
         "Aksi berdampak (kirim form, dsb.) selalu meminta izin Anda lewat tombol.\n\n"
-        "/status – keadaan sesi\n/stop – hentikan tugas berjalan\n/reset – mulai sesi baru\n/id – ID Telegram Anda\n"
+        "/status – keadaan sesi\n/stop – hentikan tugas berjalan\n/reset – mulai sesi baru\n/id – ID Telegram Anda\n/jadwal – daftar pengingat dan tugas terjadwal\n"
+        "Minta pengingat/tugas terjadwal lewat chat, mis. \"ingatkan saya setiap Senin 08.00 ...\".\n"
         "Kirim file (CSV/XLSX/PDF/DOCX/PPTX) untuk dianalisis; sebutkan apa yang diinginkan.")
 
 
@@ -230,6 +231,9 @@ class TelegramBot:
             ch_ = sess.channel
             await self.mgr.reset(f"tg{uid}")
             await ch_.send_text("Sesi baru dimulai.")
+        elif cmd == "/jadwal":
+            from .. import schedule as sch
+            await ch.send_text("Jadwal (hanya jalan saat komputer dan ChunAI menyala):\n" + sch.render_list(sch.load(sch.default_path())))
         elif cmd == "/status":
             await ch.send_text(f"Sesi: {'sibuk' if sess.busy else 'siap'}\nMenunggu izin: {len(sess.broker.pending)}\nWaktu: {describe()}\nPemakaian hari ini: setara ${self.mgr.today_cost():.2f}" + (f" dari batas ${self.mgr.daily_budget:.2f}" if self.mgr.daily_budget else ""))
         else:
