@@ -103,3 +103,45 @@ Uji: data sampel dengan angka acuan; laporan dirender dan dilihat; agen asli men
 2. Sumber data harga dan laporan keuangan: ekspor platform pengguna (platform apa?), situs resmi IDX/emiten lewat browser, dan/atau penyedia data berbayar berlisensi (paling andal untuk akurasi; ada biaya).
 3. Profil: horizon, toleransi risiko, kisaran modal, batas risiko per transaksi, preferensi (dividen, syariah, LQ45, sektor).
 4. Fokus awal: investasi (fundamental) atau trading (teknikal), atau keduanya.
+
+---
+# Pembaruan 19 Okt 2026 (2): dua jalur data (cari otomatis + unggah) dan alur kerja analis
+
+Permintaan pengguna: semua informasi pendukung analisis dapat DICARI oleh ChunAI dan/atau DIUNGGAH sebagai data alternatif; ChunAI lalu mengolah data untuk evaluasi, analisis, dan rekomendasi strategis
+trading, saham, dan investasi secara profesional. Skill ini menjadi skill TAMBAHAN di dalam ChunAI (paket `src/chunai/saham/`), memakai Telegram/Web yang sama.
+
+## Alur satu jalur dari dua pintu
+Kumpulkan -> Normalisasi -> Validasi -> Analisis -> Rekomendasi -> Gerbang kualitas -> Laporan -> Rekam jejak
+
+### Pintu 1: dicari ChunAI
+- Informasi apa: harga historis, laporan keuangan, keterbukaan informasi, aksi korporasi (dividen, pemecahan saham, rights), profil emiten, berita, makro (BI, BPS), data sektor.
+- Cara: Web Agent dan pencarian web (kartu situs baru, domain diizinkan per situs), prioritas sumber primer/tepercaya (hierarki sumber di bagian sebelumnya). Halaman dan PDF dibaca per halaman (pembaca dokumen) dengan sitasi.
+- Bila situs memblokir otomatisasi, berubah format, berbayar, atau data tidak dapat diekstrak dengan pasti: ChunAI TIDAK mengakali; melaporkan dan meminta pengguna mengunggah berkas (pintu 2).
+
+### Pintu 2: diunggah pengguna
+- CSV/XLSX harga (ekspor platform sekuritas), laporan keuangan (PDF/XLSX), presentasi paparan publik, riset, catatan. Pemeta kolom otomatis dengan konfirmasi pengguna (nama kolom bervariasi antar platform).
+- Berkas apa pun tetap dicatat sumbernya ("diunggah pengguna", nama berkas, tanggal) agar dapat ditelusuri.
+
+### Normalisasi dan penyimpanan (`data/saham/<kode>/`)
+Skema baku: harga harian OHLCV (disesuaikan aksi korporasi), ringkasan laporan keuangan (laba rugi, neraca, arus kas per periode), dividen/aksi korporasi, profil, berita/keterbukaan bertanggal.
+Setiap data membawa jejak: sumber, URL/nama berkas, tanggal ambil, periode, metode (dicari/diunggah), dan hash isi. Data dari dua pintu dapat dicocokkan; selisih dilaporkan.
+
+### Validasi
+Kesegaran, kelengkapan (tidak ada bolong harga/periode), rekonsiliasi (aset = kewajiban + ekuitas, laba vs arus kas, jumlah saham vs EPS), deteksi lonjakan tak wajar (kesalahan data atau aksi korporasi belum disesuaikan).
+Data lolos / lolos-dengan-catatan / ditolak; hanya yang lolos mendasari rekomendasi.
+
+### Analisis dan rekomendasi (profesional, strategis)
+- Investasi: kualitas bisnis dan laba, neraca, valuasi berlapis (relatif, DCF/DDM, sensitivitas), margin of safety, skenario, katalis dan risiko, rekomendasi kandidat (beli bertahap / pantau / hindari) dengan syarat pembatalan.
+- Trading: tren dan struktur harga, level kunci, volume, volatilitas (ATR), setup (titik masuk, stop, target, rasio risiko-imbalan), ukuran posisi dari batas risiko per transaksi yang ditetapkan pengguna, likuiditas dan biaya.
+- Portofolio: konsentrasi, korelasi, alokasi, dan risiko keseluruhan bila pengguna memberikan posisi.
+- Profil pengguna (horizon, toleransi risiko, modal, batas risiko, preferensi) ditanyakan di awal dan disimpan; rekomendasi menyesuaikan profil.
+- Semua rekomendasi lewat gerbang `periksa_analisis`, memuat bear case, tanggal data, asumsi, dan peringatan; dicatat di rekam jejak untuk dievaluasi.
+
+## Alat yang akan dibangun (garis besar)
+`kumpulkan_data_saham`, `impor_data_saham` (unggah + pemeta kolom), `periksa_data_saham` (validasi/rekonsiliasi), `analisis_teknikal`, `analisis_fundamental`, `valuasi_saham`, `rencana_trading`, `saring_saham`,
+`periksa_analisis`, `catat_rekomendasi` / `evaluasi_rekam_jejak`, `profil_investor`; subagen `analis_saham` (riset) dan `pembaca` (laporan keuangan); aturan kerja di prompt. Semua baca-saja/analisis; tidak ada transaksi.
+
+## Urutan pembangunan
+T0 skema data + jejak sumber + profil investor; T1 pintu 2 (impor unggahan) + validasi + analisis teknikal; T2 pintu 1 (pencarian otomatis, pembaca laporan keuangan) + fundamental dan valuasi;
+T3 rencana trading, penyaringan, gerbang kualitas, laporan DOCX/PPTX; T4 rekam jejak, watchlist, ringkasan terjadwal; T5 opsional uji masa lalu dan portofolio.
+Pintu 2 dibangun lebih dulu karena paling andal dan memberi dasar data; pintu 1 menyusul.
