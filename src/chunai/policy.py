@@ -25,7 +25,7 @@ READ_ONLY_TOOLS = {
     "mcp__chunai__info_berkas", "mcp__chunai__baca_berkas", "mcp__chunai__cari_berkas", "mcp__chunai__periksa_kutipan",   # baca-saja
     "mcp__chunai__daftar_jadwal",
     "mcp__chunai__peta_form", "mcp__chunai__simpan_rencana", "mcp__chunai__lihat_rencana", "mcp__chunai__ubah_rencana",   # draf saja
-    "mcp__chunai__terapkan_rencana", "mcp__chunai__periksa_kesesuaian", "mcp__chunai__lihat_data_diri",
+    "mcp__chunai__terapkan_rencana", "mcp__chunai__periksa_draf_sosial", "mcp__chunai__periksa_kesesuaian", "mcp__chunai__lihat_data_diri",
     "mcp__chunai__buat_dokumen", "mcp__chunai__buat_presentasi",    # hanya menulis file baru di workspace/output/
     "mcp__chunai__periksa_dokumen", "mcp__chunai__pratinjau_file",
     "mcp__chunai__baca_dokumen", "mcp__chunai__revisi_dokumen",       # revisi menulis SALINAN baru di output/, tidak menimpa   # tidak menimpa file
@@ -109,7 +109,7 @@ _FINAL_TEXT = re.compile(
     r"(kirim|submit|selesai|finish|bayar|pay|checkout|hapus|delete|remove|konfirmasi|confirm|simpan|save|setuju|agree|daftar|register|sign ?up|"
     r"pesan|order|beli|buy|publish|terbitkan|send|post|ajukan|apply|log ?out|sign ?out|keluar|unggah|upload|donasi|donate|transfer|batalkan|cancel|akhiri|end|"
     r"serahkan|turn in|kumpulkan|masuk|login|sign ?in)", re.I)
-_NAV_TEXT = re.compile(r"^\W*((lanjut(kan)?|next|continue)( ke| to)?[\w ]{0,30}|berikutnya|selanjutnya|sebelumnya|previous|prev|kembali|back)\W*$", re.I)
+_NAV_TEXT = re.compile(r"^\W*((lanjut(kan)?|next|continue)( ke| to)?[\w ]{0,30}|berikutnya|selanjutnya|sebelumnya|previous|prev|kembali|back|review( your application)?|tinjau( lamaran)?)\W*$", re.I)
 _SAFE_ROLES = {"option", "tab", "combobox", "menuitem", "radio", "checkbox"}
 
 

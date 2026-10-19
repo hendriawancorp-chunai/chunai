@@ -131,6 +131,15 @@ def formplan_tools(workdir: Path, web=None, datadiri_path: Path | None = None):
 
         tools += [peta_form, terapkan_rencana, periksa_kesesuaian, unggah_berkas]
 
+    @tool("periksa_draf_sosial",
+          "Periksa draf teks media sosial SEBELUM diisi: batas karakter (platform: linkedin|instagram; jenis: posting|komentar|headline|about|catatan_koneksi|pesan|caption|bio|dm), "
+          "jumlah hashtag, dan apakah memuat data pribadi/sensitif dari lembar data diri. Hanya membaca.", {"platform": str, "jenis": str, "teks": str})
+    async def periksa_draf_sosial(args):
+        from . import social
+        priv = {k: v["nilai"] for k, v in DD.load(ddpath).items() if v["tingkat"] in ("pribadi", "sensitif")}
+        issues = social.periksa_draf(str(args.get("platform", "")), str(args.get("jenis", "")), str(args.get("teks", "")), priv)
+        return ok("LAYAK ditinjau pengguna." if not issues else "PERLU PERBAIKAN:\n- " + "\n- ".join(issues))
+
     @tool("lihat_data_diri",
           "Tampilkan lembar data diri pengguna (nama, pendidikan, pengalaman, kontak, dst.) beserta tingkatnya: umum / pribadi / sensitif. Isi hanya dari data yang pengguna berikan; "
           "jangan menebak butir yang tidak ada. Jangan pernah memposting data pribadi/sensitif ke media sosial. tingkat opsional: 'umum' | 'pribadi' | 'sensitif'.", {"tingkat": str})
@@ -156,4 +165,4 @@ def formplan_tools(workdir: Path, web=None, datadiri_path: Path | None = None):
         except DD.DataDiriError as e:
             return err(str(e))
 
-    return tools + [lihat_data_diri, simpan_data_diri, lupa_data_diri]
+    return tools + [periksa_draf_sosial, lihat_data_diri, simpan_data_diri, lupa_data_diri]

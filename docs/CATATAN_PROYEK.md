@@ -114,6 +114,11 @@ Sisa daftar tunda: 3 Excel (rumus+grafik), 5 tema/logo (butuh bahan pengguna), 6
 - Uji agen asli (kuis latihan + materi PDF): tabel rencana benar, tidak ada kiriman sebelum persetujuan, kartu setujui_rencana + kartu kirim, data server sesuai, injeksi dilaporkan.
 - Belum: T3 uji nyata LinkedIn/Instagram (hanya di komputer pengguna), T4 lamaran kerja (prompt sudah ada, belum diuji di situs), T5 kuis interaktif timer. Prompt memuat aturan konten profesional/ujian.
 
+## 5j. T3 (LinkedIn/Instagram) dan T4 (lamaran) disiapkan (19 Okt 2026; atas permintaan pengguna TANPA uji di situs nyata)
+- `periksa_draf_sosial` (batas karakter LinkedIn/Instagram, jumlah hashtag, kebocoran data pribadi/sensitif dari lembar data diri). Kartu posting/kirim di situs sosial menambah baris "⚠ PERHATIAN, isi halaman memuat data pribadi Anda" bila ada.
+- Langkah "Review/Tinjau lamaran" dianggap navigasi (tanpa kartu); "Easy Apply", "Submit application", "Post", "Connect", "Kirim" tetap kartu. Prompt memuat alur lamaran (cocokkan lowongan dengan data diri, pertanyaan dihitung dari riwayat, unggah CV lewat kartu, satu lamaran per kartu).
+- Terverifikasi hanya: tes otomatis (223) dan agen asli memanggil `periksa_draf_sosial`. BELUM diuji di LinkedIn/Instagram asli: selektor/editor mereka bisa berbeda; kirim tangkapan layar atau jawaban agen bila ada yang gagal.
+
 ## 6. Pelajaran / kesalahan yang jangan diulang
 - Blok multi-baris yang ditempel merusak `read -rsp` → beri **satu baris per kali**; kini `chunai auth` dan `chunai setup-telegram` otomatis.
 - `cp -r SRC ~/chunai` ke folder yang sudah ada membuat folder bertingkat → pakai `cp -r SRC/. ~/chunai/`.

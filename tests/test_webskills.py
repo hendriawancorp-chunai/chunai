@@ -163,3 +163,37 @@ async def test_cdp_mode_uses_own_tab_and_leaves_browser_open(tmp_path):
             assert check_cdp(url, 1)[0]                                                    # Chrome pengguna tetap hidup
     finally:
         proc.terminate()
+
+
+def test_periksa_draf_sosial():
+    priv = {"telepon": "0812-3456-7890", "nik": "3171000000000001"}
+    assert social.periksa_draf("linkedin", "posting", "Senang bergabung di tim baru! #karier", priv) == []
+    r = social.periksa_draf("linkedin", "headline", "x" * 300)
+    assert any("melebihi batas 220" in i for i in r)
+    r = social.periksa_draf("instagram", "caption", " ".join(f"#t{i}" for i in range(31)))
+    assert any("31 hashtag" in i for i in r)
+    r = social.periksa_draf("linkedin", "posting", "Hubungi saya di 0812 3456 7890 atau NIK 3171000000000001", priv)
+    assert sum("data pribadi" in i for i in r) == 2
+    assert social.periksa_draf("tiktok", "video", "x")[0].startswith("jenis")
+
+
+def test_review_step_is_navigation_but_submit_is_not():
+    from chunai.policy import click_is_safe
+    for t in ("Review", "Review your application", "Tinjau lamaran", "Next", "Lanjut"):
+        assert click_is_safe({"tag": "button", "type": "button", "label": t}), t
+    for t in ("Submit application", "Kirim lamaran", "Easy Apply", "Post", "Connect", "Kirim"):
+        assert not click_is_safe({"tag": "button", "type": "button", "label": t}), t
+
+
+async def test_pii_warning_on_social_card(tmp_path, monkeypatch):
+    from chunai.agent import ChunAI
+    monkeypatch.setenv("CHUNAI_DATA_DIRI", str(tmp_path / "dd.json"))
+    DD.save_items(tmp_path / "dd.json", [{"kunci": "telepon", "nilai": "081234567890", "tingkat": "pribadi"}])
+    a = ChunAI(None, workdir=tmp_path / "ws", audit_path=tmp_path / "au.jsonl", web=WebConfig())
+
+    async def state(): return "- Apa yang ingin Anda diskusikan?: Telepon saya 0812-3456-7890"
+    a.web.form_state = state
+    a.web.page = SimpleNamespace(url="https://www.linkedin.com/feed/")
+    assert "memuat data pribadi" in await a._pii_warning()
+    a.web.page = SimpleNamespace(url="https://contoh.example/form")
+    assert await a._pii_warning() == ""

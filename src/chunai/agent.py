@@ -37,7 +37,7 @@ class ChunAI:
             self.gate.previewers = {
                 "mcp__chunai__buka_halaman": self._preview_open,
                 "mcp__chunai__unggah_berkas": self._preview_upload,
-                "mcp__chunai__klik": lambda i: self.web.describe(int(i["index"])),
+                "mcp__chunai__klik": self._preview_click,
                 "mcp__chunai__kirim_form": self._preview_submit,
             }
         self.gate.previewers["mcp__chunai__setujui_rencana"] = self._preview_plan
@@ -126,8 +126,24 @@ class ChunAI:
         t = next((x for x in sch.load(self.schedule_path) if x["id"] == str(i.get("id", "")).strip().lower()), None)
         return f"Hapus jadwal: {t['nama']} ({sch.render_spec(t['jadwal'])})" if t else "(id jadwal tidak ditemukan)"
 
+    async def _pii_warning(self) -> str:
+        """Di situs sosial: peringatkan bila teks di halaman memuat data pribadi/sensitif dari lembar data diri."""
+        if not self._on_social():
+            return ""
+        try:
+            from . import datadiri as DD
+            from . import social
+            priv = {k: v["nilai"] for k, v in DD.load(DD.default_path()).items() if v["tingkat"] in ("pribadi", "sensitif")}
+            issues = [i for i in social.periksa_draf("", "", await self.web.form_state(), priv) if "data pribadi" in i]
+        except Exception:
+            return ""
+        return ("\n⚠ PERHATIAN, isi halaman memuat data pribadi Anda: " + "; ".join(issues) + "\nTolak bila tidak sengaja.") if issues else ""
+
+    async def _preview_click(self, i: dict) -> str:
+        return await self.web.describe(int(i["index"])) + await self._pii_warning()
+
     async def _preview_submit(self, tool_input: dict) -> str:
-        return f"{await self.web.describe(int(tool_input['index']))}\n{await self.web.review()}"
+        return f"{await self.web.describe(int(tool_input['index']))}\n{await self.web.review()}" + await self._pii_warning()
 
     async def _can_use_tool(self, tool_name, tool_input, context):
         result = await self.gate.check(tool_name, tool_input)
