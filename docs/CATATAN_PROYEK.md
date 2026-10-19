@@ -98,7 +98,8 @@ subagen `pembaca` (rentang ±40 halaman, paralel). PDF via `pdftotext` (poppler,
 (nomor halaman mendekati Word), TXT/MD per ±3000 karakter ("bagian"). Isi dokumen dibungkus sebagai DATA + pemindai prompt-injection.
 Uji agen asli: PDF 80 halaman dengan 5 fakta tertanam + 1 injeksi: 51 dtk, dua pembaca paralel, kelima sitasi halaman benar (12, 27, 30, 47, 63), injeksi dilaporkan dan tidak diikuti, periksa_kutipan dipanggil.
 Batas jujur: PDF hasil pindai (tanpa teks) TIDAK terbaca (OCR belum ada; dilaporkan terus terang); tabel di PDF jadi teks tata letak (kolom bisa bergeser); maks 60 MB / 3000 halaman; Telegram membatasi unggahan 20 MB.
-Urutan skill pengguna: 1 revisi dokumen (selesai), 2 jadwal (selesai), 4 ringkas dokumen (selesai), 8 gambar AI gratis (berikutnya; perlu riset penyedia).
+Urutan skill pengguna: 1 revisi dokumen (selesai), 2 jadwal (selesai), 4 ringkas dokumen (selesai), 8 gambar AI gratis (DITUNDA atas keputusan pengguna 19 Okt; perlu riset penyedia gratis, uji nyata di komputer pengguna).
+Sisa daftar tunda: 3 Excel (rumus+grafik), 5 tema/logo (butuh bahan pengguna), 6 draf email/surat, 7 memori profil (kode ada di `git stash` "memori-profil-belum-diminta"), email baca/kirim dan isi form berkas (`docs/RENCANA_SKILL_BARU.md`), fase evaluasi 1-2 minggu, keputusan server 24 jam.
 
 ## 6. Pelajaran / kesalahan yang jangan diulang
 - Blok multi-baris yang ditempel merusak `read -rsp` → beri **satu baris per kali**; kini `chunai auth` dan `chunai setup-telegram` otomatis.
