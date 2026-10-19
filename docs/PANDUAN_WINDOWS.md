@@ -153,6 +153,10 @@ schtasks /Create /SC ONLOGON /TN "ChunAI" /TR "powershell -WindowStyle Hidden -F
 | Web Agent tidak bisa unggah berkas / CAPTCHA | Memang tidak didukung; lakukan sendiri lalu minta agen melanjutkan. |
 | Sandbox analisis "tidak tersedia" | Pastikan WSL **versi 2**; `chunai doctor` menampilkan statusnya. |
 
+## Merevisi dokumen yang sudah ada
+Kirim berkas DOCX atau PPTX ke bot (Telegram) atau unggah di Web, lalu tulis perintahnya, mis. "Di presentasi ini ganti pendapatan 2025 di slide 2 menjadi Rp5,40 T" atau
+"Perbaiki paragraf pertama bab 2 agar lebih ringkas". ChunAI membuat **salinan baru** berakhiran `_rev` dan mengirimkannya; berkas asli tidak diubah. Angka turunan yang tidak konsisten dilaporkan, tidak diubah diam-diam.
+
 ## Keamanan singkat
 - Jangan membagikan `.env`, token Claude, token bot, atau token Web.
 - Bot hanya melayani ID Telegram yang Anda daftarkan. Pesan dari orang lain ditolak.

@@ -23,7 +23,8 @@ READ_ONLY_TOOLS = {
     "TodoWrite", "Task", "Agent", "ListMcpResources", "ReadMcpResource", "ToolSearch",
     "mcp__chunai__periksa_laporan", "mcp__chunai__profil_data",
     "mcp__chunai__buat_dokumen", "mcp__chunai__buat_presentasi",    # hanya menulis file baru di workspace/output/
-    "mcp__chunai__periksa_dokumen", "mcp__chunai__pratinjau_file",   # tidak menimpa file
+    "mcp__chunai__periksa_dokumen", "mcp__chunai__pratinjau_file",
+    "mcp__chunai__baca_dokumen", "mcp__chunai__revisi_dokumen",       # revisi menulis SALINAN baru di output/, tidak menimpa   # tidak menimpa file
     "mcp__chunai__buat_grafik",
     "mcp__chunai__buat_gambar", "mcp__chunai__edit_gambar", "mcp__chunai__buat_video", "mcp__chunai__slide_ke_video",
     "mcp__chunai__kirim_file",        # mengirim file workspace ke pengguna sendiri (chat yang sama)

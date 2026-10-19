@@ -76,6 +76,14 @@ sandi/OTP tidak diisi. Entri manual di allowlist (mis. 127.0.0.1 untuk uji) teta
 teks Kirim/Selesai/Bayar/Hapus/Simpan/Keluar/Kumpulkan/Masuk dst., role switch, dan galat apa pun tetap minta kartu. `kirim_form` selalu kartu. Uji agen asli: kartu 2 → 1.
 Catatan risiko: tombol "Lanjut" pada wizard bisa mengirim data antar-langkah ke server (bukan pengiriman akhir). Aturan ujian di prompt: kerjakan survei/latihan/kuis buatan sendiri; ujian resmi yang melarang bantuan → tanya konteks.
 
+## 5f. Skill baru #1: revisi dokumen (19 Okt 2026)
+Tool `baca_dokumen` (ID bernomor: DOCX `P12`, `T1R2C3`; PPTX `S5.sh3`, `S5.sh7.r2c3`, grafik) dan `revisi_dokumen` (ops: ganti_teks, ganti_paragraf, sisip_setelah, hapus, ganti_sel;
+PPTX: ganti_shape_teks, ganti_sel, ganti_data_grafik). Modul `office/revise.py`. Hasil = SALINAN `output/<nama>_rev.*`, berkas asli tidak ditimpa, format dipertahankan (penggantian per run),
+semua perubahan divalidasi dulu (gagal satu = tidak ada yang berubah). Terverifikasi: render LibreOffice (slide dan dokumen tampak benar) dan agen asli (27 dtk: hanya angka diminta berubah,
+ketidakkonsistenan di slide 5 dilaporkan, bukan diubah diam-diam). Batas: footer/header hanya lewat penggantian global; grup bentuk bernomor `sh3.1`; komentar/revisi-terlacak tidak ditangani.
+Urutan skill yang dipilih pengguna (bertahap): 1 revisi dokumen (SELESAI), 2 pengingat/terjadwal, 4 ringkas dokumen panjang, 8 gambar AI gratis. Memori profil sempat dikerjakan tetapi
+belum diminta: disimpan di `git stash` ("memori-profil-belum-diminta").
+
 ## 6. Pelajaran / kesalahan yang jangan diulang
 - Blok multi-baris yang ditempel merusak `read -rsp` → beri **satu baris per kali**; kini `chunai auth` dan `chunai setup-telegram` otomatis.
 - `cp -r SRC ~/chunai` ke folder yang sudah ada membuat folder bertingkat → pakai `cp -r SRC/. ~/chunai/`.
