@@ -157,6 +157,16 @@ schtasks /Create /SC ONLOGON /TN "ChunAI" /TR "powershell -WindowStyle Hidden -F
 Kirim berkas DOCX atau PPTX ke bot (Telegram) atau unggah di Web, lalu tulis perintahnya, mis. "Di presentasi ini ganti pendapatan 2025 di slide 2 menjadi Rp5,40 T" atau
 "Perbaiki paragraf pertama bab 2 agar lebih ringkas". ChunAI membuat **salinan baru** berakhiran `_rev` dan mengirimkannya; berkas asli tidak diubah. Angka turunan yang tidak konsisten dilaporkan, tidak diubah diam-diam.
 
+## Form, soal, dan media sosial (Web Agent lanjutan)
+1. **Data diri (sekali):** kirim CV/biodata Anda ke bot lalu tulis "Siapkan lembar data diri dari CV ini". Anda menerima kartu izin berisi butir yang akan disimpan (nilai pribadi disamarkan).
+   Data disimpan lokal di `data/data_diri.json`; butir dibagi umum / pribadi / sensitif. Data pribadi dan sensitif tidak pernah diposting ke media sosial dan hanya diisi ke form bila ditanyakan.
+2. **Form atau soal:** tulis "Buka <alamat> dan kerjakan. Materi: masukan/materi.pdf" (materi opsional). ChunAI menampilkan **tabel rencana** (soal, jawaban, dasar, keyakinan). Koreksi lewat chat ("no 3 ganti B"),
+   lalu balas "setuju". Baru setelah itu halaman diisi, diperiksa kesesuaiannya, dan dikirim dengan kartu izin. Soal tanpa dasar dilewati, tidak ditebak.
+   Ujian resmi yang melarang bantuan tidak dikerjakan; survei, form, kuis latihan, dan kuis buatan sendiri tidak masalah.
+3. **LinkedIn/Instagram:** pakai Chrome sendiri (mode CDP): jalankan `chunai cdp-help` dan ikuti langkahnya (sekali: `.wslconfig` mirrored; tiap kali: `scripts\start-chrome-cdp.ps1`, login manual di jendela itu).
+   Minta draf dulu ("buatkan caption/posting tentang ..."), tinjau, lalu ChunAI mengisi dan meminta kartu izin sebelum memposting. Satu tindakan per kartu. Batas 15 tindakan/hari
+   (`CHUNAI_SOCIAL_DAILY_LIMIT` di `.env`, 0 = tanpa batas). Platform melarang otomatisasi: gunakan seperlunya; akun bisa dibatasi.
+
 ## Meringkas dokumen panjang
 Kirim PDF/DOCX/PPTX (satu atau beberapa berkas) lalu tulis, mis. "Ringkas laporan ini menjadi 5 butir temuan dengan halaman" atau "Di mana dokumen ini menyebut anggaran 2026?". Setiap butir diberi nomor halaman
 dan kutipan langsung diverifikasi terhadap dokumennya. PDF hasil pindai (berupa gambar) belum bisa dibaca. Dokumen sangat panjang dibaca bertahap oleh beberapa "pembaca" sehingga butuh beberapa menit.

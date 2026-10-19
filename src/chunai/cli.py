@@ -74,7 +74,7 @@ USAGE = """ChunAI
   chunai auth                  login Claude; token disimpan otomatis ke .env
   chunai setup-telegram        hubungkan bot Telegram (token divalidasi, ID pemilik terdeteksi otomatis)\n  chunai telegram-check        periksa token/ID/webhook Telegram (tanpa menjalankan bot)
   chunai serve                 Web + Telegram sekaligus
-  chunai login <url>           login manual untuk Web Agent (komputer lokal)"""
+  chunai login <url>           login manual untuk Web Agent (komputer lokal)\n  chunai cdp-help              panduan + pemeriksaan memakai Chrome sendiri (CDP)"""
 
 
 async def run_telegram() -> None:
@@ -245,6 +245,10 @@ def main() -> None:
             run_auth()
         if arg == "savetoken":
             run_savetoken()
+        if arg == "cdp-help":
+            from .cdp import help_text
+            print(help_text())
+            sys.exit(0)
         if arg == "audit":
             run_audit()
             return

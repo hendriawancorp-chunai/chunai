@@ -24,6 +24,8 @@ READ_ONLY_TOOLS = {
     "mcp__chunai__periksa_laporan", "mcp__chunai__profil_data",
     "mcp__chunai__info_berkas", "mcp__chunai__baca_berkas", "mcp__chunai__cari_berkas", "mcp__chunai__periksa_kutipan",   # baca-saja
     "mcp__chunai__daftar_jadwal",
+    "mcp__chunai__peta_form", "mcp__chunai__simpan_rencana", "mcp__chunai__lihat_rencana", "mcp__chunai__ubah_rencana",   # draf saja
+    "mcp__chunai__terapkan_rencana", "mcp__chunai__periksa_kesesuaian", "mcp__chunai__lihat_data_diri",
     "mcp__chunai__buat_dokumen", "mcp__chunai__buat_presentasi",    # hanya menulis file baru di workspace/output/
     "mcp__chunai__periksa_dokumen", "mcp__chunai__pratinjau_file",
     "mcp__chunai__baca_dokumen", "mcp__chunai__revisi_dokumen",       # revisi menulis SALINAN baru di output/, tidak menimpa   # tidak menimpa file
@@ -49,7 +51,7 @@ _DENY_BASH = re.compile(r"(rm\s+-rf\s+/(\s|$)|mkfs|:\(\)\s*\{|dd\s+if=.*of=/dev/
 # Web Agent: draf (membaca/mengisi) otomatis; klik & kirim SELALU minta izin.
 WEB_DRAFT_TOOLS = {"mcp__chunai__baca_halaman", "mcp__chunai__isi_field", "mcp__chunai__siapkan_review"}
 WEB_OPEN_TOOL = "mcp__chunai__buka_halaman"
-WEB_FINAL_TOOLS = {"mcp__chunai__klik", "mcp__chunai__kirim_form"}
+WEB_FINAL_TOOLS = {"mcp__chunai__klik", "mcp__chunai__kirim_form", "mcp__chunai__unggah_berkas"}
 
 
 def host_allowed(url: str, allowed: set[str] | None) -> bool:

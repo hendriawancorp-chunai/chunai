@@ -101,6 +101,19 @@ Batas jujur: PDF hasil pindai (tanpa teks) TIDAK terbaca (OCR belum ada; dilapor
 Urutan skill pengguna: 1 revisi dokumen (selesai), 2 jadwal (selesai), 4 ringkas dokumen (selesai), 8 gambar AI gratis (DITUNDA atas keputusan pengguna 19 Okt; perlu riset penyedia gratis, uji nyata di komputer pengguna).
 Sisa daftar tunda: 3 Excel (rumus+grafik), 5 tema/logo (butuh bahan pengguna), 6 draf email/surat, 7 memori profil (kode ada di `git stash` "memori-profil-belum-diminta"), email baca/kirim dan isi form berkas (`docs/RENCANA_SKILL_BARU.md`), fase evaluasi 1-2 minggu, keputusan server 24 jam.
 
+## 5i. Web Agent lanjutan T0-T2 + pagar sosial (19 Okt 2026; rencana: `docs/RENCANA_WEB_AGENT_LANJUTAN.md`)
+- **CDP (T0):** agen memakai tab BARU di Chrome pengguna (tab pengguna tidak disentuh; saat selesai hanya tab agen ditutup). `chunai cdp-help` (panduan + cek koneksi), `chunai doctor` memeriksa bila `CHUNAI_BROWSER=cdp`,
+  `scripts/start-chrome-cdp.ps1`. Win11 + WSL2: `networkingMode=mirrored`. Teruji dengan Chromium sungguhan (tes). BELUM teruji di Chrome/Windows pengguna.
+- **Peta soal + rencana isian (T1):** `peta_form` (soal, jenis, opsi, wajib, batas karakter, ⚠DATA PRIBADI), `simpan_rencana/lihat_rencana/ubah_rencana`, `setujui_rencana` (KARTU izin berisi tabel),
+  `terapkan_rencana` (isi draf + selisih), `periksa_kesesuaian`. Rencana disimpan di `workspace/rencana/<nama>.json` (bisa dilanjutkan). Butir tanpa dasar = `tidak_ada` (dilewati, tidak ditebak).
+- **Editor teks kaya + unggah (T2):** `isi_field` mendukung contenteditable/role=textbox; `unggah_berkas` (hanya workspace, jenis dibatasi, kartu, tanpa "selalu"; bisa lewat tombol yang membuka dialog berkas).
+- **Lembar data diri:** `data/data_diri.json` (izin 600, tidak di repo/cadangan); tingkat umum/pribadi/sensitif; `lihat_data_diri`, `simpan_data_diri` (batch, kartu dengan nilai disamarkan), `lupa_data_diri`. Tidak diinjeksi otomatis ke prompt.
+  Uji agen asli dengan CV pengguna: 43 butir (27 umum, 8 pribadi, 8 sensitif), kontak referensi orang lain sengaja tidak disimpan.
+- **Pagar media sosial (F8):** `social.py`: LinkedIn/Instagram/Facebook/X/TikTok/Threads: tindakan keluar (klik non-navigasi, kirim_form) dihitung per hari (default 15, `CHUNAI_SOCIAL_DAILY_LIMIT`, 0 = tanpa batas)
+  dan diberi jeda minimum tetap 20 dtk; tanpa trik menghindari deteksi. Melebihi batas = ditolak tanpa kartu.
+- Uji agen asli (kuis latihan + materi PDF): tabel rencana benar, tidak ada kiriman sebelum persetujuan, kartu setujui_rencana + kartu kirim, data server sesuai, injeksi dilaporkan.
+- Belum: T3 uji nyata LinkedIn/Instagram (hanya di komputer pengguna), T4 lamaran kerja (prompt sudah ada, belum diuji di situs), T5 kuis interaktif timer. Prompt memuat aturan konten profesional/ujian.
+
 ## 6. Pelajaran / kesalahan yang jangan diulang
 - Blok multi-baris yang ditempel merusak `read -rsp` → beri **satu baris per kali**; kini `chunai auth` dan `chunai setup-telegram` otomatis.
 - `cp -r SRC ~/chunai` ke folder yang sudah ada membuat folder bertingkat → pakai `cp -r SRC/. ~/chunai/`.

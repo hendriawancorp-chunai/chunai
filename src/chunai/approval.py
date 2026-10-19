@@ -42,6 +42,8 @@ class ApprovalGate:
     # pratinjau berbasis kondisi NYATA (mis. isi form dibaca dari halaman), bukan klaim agen
     previewers: dict[str, Callable[[dict], Awaitable[str]]] = field(default_factory=dict)
     click_probe: Callable[[dict], Awaitable[bool]] | None = None   # True = klik navigasi/pilihan aman (tanpa kartu)
+    final_guard: Callable[[str, dict], Awaitable[str | None]] | None = None      # pesan penolakan (mis. batas harian media sosial)
+    on_final_approved: Callable[[str, dict], Awaitable[None]] | None = None      # dicatat/ditunda setelah pengguna menyetujui aksi akhir
     on_domain: Callable[[str, bool], None] | None = None   # (host, permanen) saat pengguna mengizinkan situs baru
 
     async def check(self, tool: str, tool_input: dict) -> ApprovalResult:
@@ -55,6 +57,14 @@ class ApprovalGate:
             self.audit.record("auto_allowed", tool=tool)
             return ApprovalResult(True)
 
+        if tool in WEB_FINAL_TOOLS and tool != "mcp__chunai__unggah_berkas" and self.final_guard:
+            try:
+                msg = await self.final_guard(tool, tool_input)
+            except Exception:
+                msg = None
+            if msg:
+                self.audit.record("denied_by_guard", tool=tool, reason=msg[:120])
+                return ApprovalResult(False, msg)
         if tool == "mcp__chunai__klik" and self.click_probe:
             try:
                 if await self.click_probe(tool_input):
@@ -73,6 +83,11 @@ class ApprovalGate:
         self.audit.record("approval_requested", tool=tool, input=tool_input)
         result = await self.reviewer(req)
         self.audit.record("approval_decision", tool=tool, approved=result.approved, note=result.note)
+        if result.approved and tool in WEB_FINAL_TOOLS and tool != "mcp__chunai__unggah_berkas" and self.on_final_approved:
+            try:
+                await self.on_final_approved(tool, tool_input)
+            except Exception:
+                pass
         if result.approved and tool == WEB_OPEN_TOOL:
             host = (urlparse(str((result.updated_input or tool_input).get("url", ""))).hostname or "").lower()
             host = host[4:] if host.startswith("www.") else host

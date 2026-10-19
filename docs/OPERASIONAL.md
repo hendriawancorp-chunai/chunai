@@ -27,6 +27,7 @@ Berkas mentahnya: `data/sessions/<pengguna>/audit.jsonl` (waktu dalam zona waktu
 
 ## 3. Batas pemakaian harian
 Pengaman terhadap tugas yang berulang tanpa henti. Pada langganan, angka ini adalah "biaya setara" (bukan tagihan).
+- Media sosial: batas tindakan keluar per hari `CHUNAI_SOCIAL_DAILY_LIMIT` (default 15). Chrome sendiri: `CHUNAI_BROWSER=cdp`, `CHUNAI_CDP_URL=http://127.0.0.1:9222`. Data diri: `data/data_diri.json` (jangan dibagikan).
 - Default: **$20/hari**. Ubah di `.env`: `CHUNAI_DAILY_BUDGET_USD=40` (0 = tanpa batas), lalu jalankan ulang.
 - Bila tercapai, bot membalas pesan yang menjelaskan dan tidak menjalankan tugas baru sampai besok.
 - Telegram `/status` menampilkan pemakaian hari ini.

@@ -110,6 +110,10 @@ def run_checks() -> list[Check]:
         p = shutil.which(exe)
         c.append(Check(f"{exe} ({why})", bool(p), p or f"belum ada. Linux/WSL: sudo apt install -y {'libreoffice-writer libreoffice-impress' if exe == 'soffice' else 'poppler-utils' if exe == 'pdftoppm' else exe}",
                        critical=False))
+    if os.environ.get("CHUNAI_BROWSER", "").lower() == "cdp":
+        from .cdp import check_cdp
+        okc, det = check_cdp(os.environ.get("CHUNAI_CDP_URL", "http://127.0.0.1:9222"))
+        c.append(Check("Chrome sendiri (CDP)", okc, det, critical=False))
     from .sandbox import isolation_available
     iso = isolation_available()
     c.append(Check("Sandbox analisis (tanpa internet)", iso, "aktif" if iso else

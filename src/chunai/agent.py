@@ -32,11 +32,16 @@ class ChunAI:
             self.gate.allowed_domains = set(web.allowed_domains)
             self.gate.on_domain = self._domain_added
             self.gate.click_probe = self._click_probe
+            self.gate.final_guard = self._social_guard
+            self.gate.on_final_approved = self._social_done
             self.gate.previewers = {
                 "mcp__chunai__buka_halaman": self._preview_open,
+                "mcp__chunai__unggah_berkas": self._preview_upload,
                 "mcp__chunai__klik": lambda i: self.web.describe(int(i["index"])),
                 "mcp__chunai__kirim_form": self._preview_submit,
             }
+        self.gate.previewers["mcp__chunai__setujui_rencana"] = self._preview_plan
+        self.gate.previewers["mcp__chunai__simpan_data_diri"] = self._preview_datadiri
         self.gate.previewers["mcp__chunai__buat_jadwal"] = self._preview_schedule
         self.gate.previewers["mcp__chunai__hapus_jadwal"] = self._preview_unschedule
         self.fetch_log: dict[str, str] = {}   # url -> "ok" | "gagal" (dari hook WebFetch; dipakai pemeriksa sumber)
@@ -54,6 +59,43 @@ class ChunAI:
         warn = "\n⚠ Nama situs memakai karakter khusus (xn--): periksa, bisa situs tiruan." if "xn--" in host else ""
         return (f"SITUS BARU: {host}\nAlamat lengkap: {url[:200]}\nPastikan alamat ini benar dan memang situs yang Anda maksud.{warn}\nSetuju = izinkan situs ini untuk sesi ini. ♾ Selalu = simpan permanen (tidak ditanya lagi).\n"
                 "Mengisi dan mengirim form di situs ini tetap selalu meminta izin Anda.")
+
+    def _on_social(self) -> bool:
+        from .social import is_social
+        return bool(self.web and self.web.page is not None and is_social(self.web.page.url))
+
+    async def _social_guard(self, tool: str, tool_input: dict) -> str | None:
+        if not self._on_social():
+            return None
+        from .social import check, default_path
+        return check(default_path())
+
+    async def _social_done(self, tool: str, tool_input: dict) -> None:
+        if not self._on_social():
+            return
+        import asyncio
+
+        from .social import default_path, record, wait_needed
+        w = wait_needed(default_path())
+        if w > 0:
+            await asyncio.sleep(w)                 # jeda minimum tetap antar tindakan keluar di media sosial
+        record(default_path())
+
+    async def _preview_upload(self, i: dict) -> str:
+        p = Path(self.workdir / str(i.get("path", "")))
+        size = f"{p.stat().st_size // 1024} KB" if p.is_file() else "TIDAK ADA"
+        el = await self.web.describe(int(i["index"]))
+        return f"Berkas: {p.name} ({size}), dari workspace\nTujuan: {el}\nURL: {self.web.page.url}"
+
+    async def _preview_plan(self, i: dict) -> str:
+        from . import formplan as F
+        return F.render_plan(F.load_plan(self.workdir, str(i.get("nama", ""))))
+
+    async def _preview_datadiri(self, i: dict) -> str:
+        def mask(v: str, t: str) -> str:
+            return v if t == "umum" or len(v) < 8 else v[:2] + "…" + v[-2:] + f" ({len(v)} karakter)"
+        rows = [f"- [{b.get('tingkat')}] {b.get('kunci')}: {mask(str(b.get('nilai', '')), str(b.get('tingkat')))}" for b in (i.get("butir") or [])[:40]]
+        return "Simpan ke lembar data diri (lokal; pribadi/sensitif ditampilkan disamarkan):\n" + "\n".join(rows)
 
     async def _click_probe(self, tool_input: dict) -> bool:
         return self.web.click_is_safe(int(tool_input["index"]))
