@@ -145,3 +145,9 @@ Data lolos / lolos-dengan-catatan / ditolak; hanya yang lolos mendasari rekomend
 T0 skema data + jejak sumber + profil investor; T1 pintu 2 (impor unggahan) + validasi + analisis teknikal; T2 pintu 1 (pencarian otomatis, pembaca laporan keuangan) + fundamental dan valuasi;
 T3 rencana trading, penyaringan, gerbang kualitas, laporan DOCX/PPTX; T4 rekam jejak, watchlist, ringkasan terjadwal; T5 opsional uji masa lalu dan portofolio.
 Pintu 2 dibangun lebih dulu karena paling andal dan memberi dasar data; pintu 1 menyusul.
+
+---
+# Status pembangunan (19 Okt 2026)
+Keputusan pengguna: IDX; sumber = ekspor platform kredibel, situs resmi IDX/emiten, dan sumber gratis; fokus investasi (fundamental) dan trading (teknikal); studi komparatif untuk keputusan jual/beli.
+SELESAI: T0 (penyimpanan + jejak sumber + profil investor) dan T1 (impor unggahan, validasi, analisis teknikal, rencana trading, perbandingan, grafik). Lihat `docs/CATATAN_PROYEK.md` 5l.
+BERIKUTNYA: T2 pintu 1 (pencarian otomatis, pembaca laporan keuangan), fundamental dan valuasi; T3 gerbang `periksa_analisis`, laporan DOCX/PPTX, penyaringan; T4 rekam jejak, watchlist terjadwal.

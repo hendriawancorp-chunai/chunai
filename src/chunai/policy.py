@@ -24,6 +24,8 @@ READ_ONLY_TOOLS = {
     "mcp__chunai__periksa_laporan", "mcp__chunai__profil_data",
     "mcp__chunai__info_berkas", "mcp__chunai__baca_berkas", "mcp__chunai__cari_berkas", "mcp__chunai__periksa_kutipan",   # baca-saja
     "mcp__chunai__daftar_jadwal",
+    "mcp__chunai__impor_data_saham", "mcp__chunai__daftar_data_saham", "mcp__chunai__periksa_data_saham", "mcp__chunai__analisis_teknikal",   # data saham lokal, baca/hitung
+    "mcp__chunai__rencana_trading", "mcp__chunai__bandingkan_saham", "mcp__chunai__grafik_saham", "mcp__chunai__profil_investor",
     "mcp__chunai__peta_form", "mcp__chunai__simpan_rencana", "mcp__chunai__lihat_rencana", "mcp__chunai__ubah_rencana",   # draf saja
     "mcp__chunai__terapkan_rencana", "mcp__chunai__periksa_draf_sosial", "mcp__chunai__periksa_kesesuaian", "mcp__chunai__lihat_data_diri",
     "mcp__chunai__buat_dokumen", "mcp__chunai__buat_presentasi",    # hanya menulis file baru di workspace/output/

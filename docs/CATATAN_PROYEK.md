@@ -126,6 +126,16 @@ Sisa daftar tunda: 3 Excel (rumus+grafik), 5 tema/logo (butuh bahan pengguna), 6
 - Pelajaran: perintah PowerShell untuk Chrome harus memakai `Start-Process` (baris dengan path berkutip tanpa `&` error di PowerShell); `chunai cdp-help` pada versi lama jatuh ke mode chat (tanda kode belum diperbarui);
   jangan menggabungkan `pytest | tail` dengan `&&` untuk menggerbangi commit (kode keluar `tail` selalu 0): pakai kode keluar pytest langsung.
 
+## 5l. Skill analisis saham T0+T1 (19 Okt 2026; rencana: `docs/RENCANA_SKILL_SAHAM.md`)
+Paket `src/chunai/saham/`: `store.py` (data/saham/<KODE>/prices.csv + meta.json dengan jejak sumber: sumber, metode diunggah/dicari, berkas, sha256, periode, tanggal ambil), `impor.py` (CSV/TSV/XLSX ekspor platform; header terdeteksi
+walau ada baris pembuka; kolom Indonesia/Inggris; format angka 1.234,56 vs 1,234.56 disimpulkan atau diminta; tanggal DD/MM vs MM/DD; tanggal ganda), `validasi.py` (kesegaran, bolong, OHLC konsisten, lonjakan >35% = kemungkinan aksi korporasi,
+volume nol; hasil lolos/lolos_dengan_catatan/ditolak), `teknikal.py` (SMA, EMA, RSI Wilder, MACD, Bollinger, ATR Wilder, support/resistance swing, tren, kinerja, volatilitas, likuiditas; rencana trading: ukuran lot dari batas rugi,
+fraksi harga IDX, biaya beli 0,15%/jual 0,25%, target 1R/2R/3R, peringatan likuiditas), `profil.py` (horizon, toleransi, modal, batas rugi <=5%, preferensi, posisi), `tools.py` (impor_data_saham, daftar_data_saham, periksa_data_saham,
+analisis_teknikal, rencana_trading, bandingkan_saham, grafik_saham, profil_investor, simpan_profil_investor[kartu]). Prompt "Analis saham" memuat standar (tanpa kata kepastian, tanggal+sumber, bear case, apa yang BELUM dianalisis).
+Verifikasi: indikator dicocokkan dengan hitungan acuan independen (RSI Wilder dengan nilai manual 70,4545, SMA/EMA/ATR loop murni), rencana trading dihitung ulang manual; agen asli (TLKM sintetis, format Stockbit gaya Indonesia): impor, validasi,
+analisis, 2 opsi stop, angka cocok hitung ulang (95 lot, rugi ≈ Rp2,08 jt), menyatakan fundamental/valuasi/berita/dividen BELUM dianalisis dan tidak memberi kepastian. Tes 237 lolos.
+BELUM: T2 pencarian otomatis (pintu 1) + fundamental + valuasi (relatif, DCF/DDM), T3 gerbang `periksa_analisis` + laporan DOCX/PPTX + penyaringan, T4 rekam jejak + watchlist terjadwal. Uji dengan data pasar NYATA hanya di komputer pengguna.
+
 ## 6. Pelajaran / kesalahan yang jangan diulang
 - Blok multi-baris yang ditempel merusak `read -rsp` → beri **satu baris per kali**; kini `chunai auth` dan `chunai setup-telegram` otomatis.
 - `cp -r SRC ~/chunai` ke folder yang sudah ada membuat folder bertingkat → pakai `cp -r SRC/. ~/chunai/`.

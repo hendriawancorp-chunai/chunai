@@ -167,6 +167,12 @@ Kirim berkas DOCX atau PPTX ke bot (Telegram) atau unggah di Web, lalu tulis per
    Minta draf dulu ("buatkan caption/posting tentang ..."), tinjau, lalu ChunAI mengisi dan meminta kartu izin sebelum memposting. Satu tindakan per kartu. Batas 15 tindakan/hari
    (`CHUNAI_SOCIAL_DAILY_LIMIT` di `.env`, 0 = tanpa batas). Platform melarang otomatisasi: gunakan seperlunya; akun bisa dibatasi.
 
+## Analisis saham (IDX): teknikal dan rencana trading
+1. Unduh riwayat harga satu saham dari platform Anda (CSV/XLSX; mis. Stockbit, RTI, situs bursa), lalu kirim ke bot.
+2. Tulis, mis. "Ini ekspor harga TLKM dari Stockbit. Profil saya: horizon menengah, toleransi moderat, modal Rp200 juta, batas rugi 1% per transaksi. Impor, periksa, analisis teknikal, dan buat rencana trading."
+3. ChunAI menyimpan profil (kartu izin), mengimpor dengan mencatat sumber, memeriksa kualitas data (kesegaran, bolong, lonjakan), lalu analisis dan rencana ukuran lot dari batas rugi Anda. "Bandingkan TLKM BBRI BMRI" untuk studi komparatif.
+Data tersimpan lokal di `data/saham/`. Hasil adalah pandangan teknikal; fundamental, valuasi, dan berita menyusul (belum ada). Bukan nasihat keuangan berlisensi; keputusan dan risiko ada pada Anda.
+
 ## Meringkas dokumen panjang
 Kirim PDF/DOCX/PPTX (satu atau beberapa berkas) lalu tulis, mis. "Ringkas laporan ini menjadi 5 butir temuan dengan halaman" atau "Di mana dokumen ini menyebut anggaran 2026?". Setiap butir diberi nomor halaman
 dan kutipan langsung diverifikasi terhadap dokumennya. PDF hasil pindai (berupa gambar) belum bisa dibaca. Dokumen sangat panjang dibaca bertahap oleh beberapa "pembaca" sehingga butuh beberapa menit.
