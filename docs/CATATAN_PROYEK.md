@@ -119,6 +119,13 @@ Sisa daftar tunda: 3 Excel (rumus+grafik), 5 tema/logo (butuh bahan pengguna), 6
 - Langkah "Review/Tinjau lamaran" dianggap navigasi (tanpa kartu); "Easy Apply", "Submit application", "Post", "Connect", "Kirim" tetap kartu. Prompt memuat alur lamaran (cocokkan lowongan dengan data diri, pertanyaan dihitung dari riwayat, unggah CV lewat kartu, satu lamaran per kartu).
 - Terverifikasi hanya: tes otomatis (223) dan agen asli memanggil `periksa_draf_sosial`. BELUM diuji di LinkedIn/Instagram asli: selektor/editor mereka bisa berbeda; kirim tangkapan layar atau jawaban agen bila ada yang gagal.
 
+## 5k. Terverifikasi di komputer pengguna (19 Okt 2026)
+- Kode terbaru terpasang; `chunai doctor` hijau semua, termasuk "Chrome sendiri (CDP) terhubung ke Chrome/154" (Win11, WSL `networkingMode=mirrored`, Chrome profil `C:\chunai-chrome`).
+- Telegram: CV diterima; draf headline LinkedIn dari CV tersusun tanpa mengisi apa pun; kartu SITUS BARU (alamat lengkap) muncul; agen membuka beranda LinkedIn dengan sesi login pengguna (tab baru) dan hanya membaca.
+- Pengguna menyatakan "sudah bisa berjalan baik". Belum dicoba: mengisi kolom headline di dialog edit LinkedIn (uji "isi tapi jangan simpan"), posting, lamaran, Instagram. Itu langkah uji berikutnya.
+- Pelajaran: perintah PowerShell untuk Chrome harus memakai `Start-Process` (baris dengan path berkutip tanpa `&` error di PowerShell); `chunai cdp-help` pada versi lama jatuh ke mode chat (tanda kode belum diperbarui);
+  jangan menggabungkan `pytest | tail` dengan `&&` untuk menggerbangi commit (kode keluar `tail` selalu 0): pakai kode keluar pytest langsung.
+
 ## 6. Pelajaran / kesalahan yang jangan diulang
 - Blok multi-baris yang ditempel merusak `read -rsp` → beri **satu baris per kali**; kini `chunai auth` dan `chunai setup-telegram` otomatis.
 - `cp -r SRC ~/chunai` ke folder yang sudah ada membuat folder bertingkat → pakai `cp -r SRC/. ~/chunai/`.
