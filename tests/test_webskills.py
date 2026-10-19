@@ -117,7 +117,7 @@ def test_check_cdp_ok_and_fail():
     srv.shutdown()
     assert ok and "Chrome/140.0" in detail
     ok, detail = check_cdp("http://127.0.0.1:1", timeout=1)
-    assert not ok and "cdp-help" in detail
+    assert not ok and "langkah A dan B" in detail
     t = help_text("http://127.0.0.1:1")
     assert "mirrored" in t and "chunai-chrome" in t and "--remote-debugging-port=9222" in t
 
