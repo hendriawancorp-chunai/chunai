@@ -46,7 +46,7 @@ Tiap tahap: tes otomatis (commit hanya bila `pytest -q` lolos), agen asli di sit
 
 ## 4. Panduan CDP (ringkas; dipastikan dan diuji di T0)
 1. Tutup semua jendela Chrome. Jalankan Chrome Windows dengan profil khusus dan port debug (Chrome 136+ mewajibkan `--user-data-dir` sendiri):
-   `"C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe" --remote-debugging-port=9222 --user-data-dir="C:\\chunai-chrome"`
+   `Start-Process "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe" -ArgumentList "--remote-debugging-port=9222","--user-data-dir=C:\\chunai-chrome"` (PowerShell)
 2. Login manual ke LinkedIn/Instagram di jendela itu (sekali; sesi tersimpan di profil khusus).
 3. Agar WSL2 menjangkau port itu: Windows 11 dengan WSL `networkingMode=mirrored` di `%UserProfile%\\.wslconfig` (lalu `wsl --shutdown`), atau penerusan port (`netsh interface portproxy`). Di `.env`: `CHUNAI_BROWSER=cdp`, `CHUNAI_CDP_URL=http://127.0.0.1:9222`.
 4. `chunai doctor` memeriksa koneksi. Jangan membuka Chrome profil khusus untuk hal lain; port debug memberi kendali penuh atas browser itu: jalankan hanya di komputer pribadi.

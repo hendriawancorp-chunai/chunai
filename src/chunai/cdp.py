@@ -4,7 +4,7 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
-CHROME_CMD = r'"C:\Program Files\Google\Chrome\Application\chrome.exe" --remote-debugging-port=9222 --user-data-dir="C:\chunai-chrome"'
+CHROME_CMD = r'Start-Process "C:\Program Files\Google\Chrome\Application\chrome.exe" -ArgumentList "--remote-debugging-port=9222","--user-data-dir=C:\chunai-chrome"'
 
 
 def in_wsl() -> bool:
@@ -27,7 +27,7 @@ def check_cdp(url: str, timeout: float = 3.0) -> tuple[bool, str]:
         why = type(e).__name__
     except ValueError:
         why = "respons bukan JSON"
-    hint = ("Chrome belum dijalankan dengan port debug, atau WSL belum bisa menjangkau Windows. Jalankan: chunai cdp-help")
+    hint = ("Chrome belum dijalankan dengan port debug, atau WSL belum bisa menjangkau Windows (lihat langkah A dan B di panduan).")
     return False, f"tidak terhubung ke {base} ({why}). {hint}"
 
 
@@ -44,7 +44,7 @@ A. Sekali saja: agar WSL2 bisa menjangkau Windows
         [wsl2]
         networkingMode=mirrored
    2) Di PowerShell: wsl --shutdown     lalu buka Ubuntu lagi.
-   (Windows 11 22H2 atau lebih baru. Bila tidak berhasil, kirim tangkapan layar hasil  chunai cdp-help.)
+   (Windows 11 22H2 atau lebih baru. Bila .wslconfig sudah ada, tambahkan dua baris itu tanpa menghapus isi lama.)
 
 B. Setiap kali ingin memakai (di Windows):
    1) Tutup SEMUA jendela Chrome (cek ikon baki sistem).
