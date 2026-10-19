@@ -46,3 +46,60 @@ Uji data langsung (sumber nyata) hanya di komputer pengguna.
 3. Sumber data: opsi A/D saja, atau juga B/C (biaya)? Punya akun/ekspor dari platform apa?
 4. Pemantauan: frekuensi dan jenis peringatan.
 5. Format laporan: DOCX, PPTX, atau ringkasan Telegram.
+
+---
+# Pembaruan 19 Okt 2026: standar "analis profesional" dan akurasi berbasis sumber kredibel
+
+Permintaan pengguna: analisis saham yang AKURAT, berlandaskan informasi KREDIBEL, dan ChunAI berperan sebagai analis profesional trading, saham, dan investasi.
+
+## Arti "akurat" yang bisa dijanjikan
+- BISA dijamin lewat rancangan: angka benar (dihitung kode dari data mentah bersumber), sumber jelas dan tanggalnya, metode dan asumsi terbuka, tidak ada klaim tanpa dasar, skenario negatif selalu ada.
+- TIDAK bisa dijamin oleh siapa pun: arah harga di masa depan. ChunAI tidak akan menyatakan kepastian; yang diberikan adalah probabilitas kualitatif, rentang, dan syarat pembatalan.
+- Akurasi dibuktikan dari waktu ke waktu lewat catatan rekam jejak (lihat bawah), bukan klaim.
+
+## Hierarki sumber (kredibilitas)
+1. Primer: keterbukaan informasi dan laporan keuangan di situs bursa (IDX), situs relasi investor emiten, prospektus, regulator (OJK), bank sentral (BI), statistik resmi (BPS, Kemenkeu).
+2. Pasar/berita tepercaya: kantor berita dan media keuangan mapan; data harga dari penyedia berlisensi atau ekspor platform sekuritas pengguna.
+3. Lemah (ditandai, tidak boleh jadi dasar tunggal rekomendasi): forum, media sosial, rumor, analis anonim.
+Aturan: angka kunci (laba, ekuitas, utang, dividen, jumlah saham) harus dari sumber primer; klaim penting minimal dua sumber independen; bertentangan = dilaporkan, tidak dipilih diam-diam.
+Pada situs yang tidak terbuka untuk agen (mis. memblokir otomatisasi), pengguna mengunduh berkas sendiri; agen tidak mengakali pemblokiran.
+
+## Lima lapis pengamanan akurasi
+1. Data bersumber: setiap angka tersimpan dengan sumber, tanggal pengambilan, dan periode (kuartal/tahun); data kedaluwarsa ditandai dan tidak dipakai merekomendasikan.
+2. Hitung dengan kode: rasio dan indikator dihitung di sandbox dari data mentah tersimpan; tes otomatis membandingkan dengan hitungan acuan independen.
+3. Verifikasi silang: rekonsiliasi (laba bersih vs laporan arus kas, jumlah saham vs EPS, total aset = kewajiban + ekuitas), deteksi anomali dan lompatan data.
+4. Gerbang kualitas laporan (`periksa_analisis`, seperti `periksa_laporan`): menolak laporan yang angkanya tanpa sumber/tanggal, tanpa asumsi valuasi, tanpa skenario negatif dan risiko, tanpa peringatan, atau yang memakai kata kepastian ("pasti naik", "dijamin").
+5. Rekam jejak: setiap kandidat yang dikeluarkan dicatat (tanggal, harga, tesis, target/pembatalan) lalu dievaluasi berkala terhadap hasil dan indeks pembanding; kalibrasi dilaporkan jujur, termasuk yang meleset.
+
+## Standar analisis profesional (isi setiap laporan)
+- Ringkasan eksekutif dan kesimpulan (kandidat / pantau / hindari) dengan tingkat keyakinan dan alasan inti.
+- Bisnis dan industri: model bisnis, posisi kompetitif, siklus sektor, regulasi, katalis dan risiko.
+- Kualitas laba dan neraca: tren pendapatan/margin, arus kas vs laba, utang dan bunga, modal kerja, kualitas dividen, tata kelola dan pihak berelasi.
+- Valuasi berlapis: relatif (PER, PBV, EV/EBITDA vs sektor dan riwayat), DCF atau DDM (bila relevan) dengan analisis sensitivitas, dan rentang nilai wajar; asumsi tertulis.
+- Skenario: dasar, optimis, pesimis dengan pemicu masing-masing.
+- Teknikal dan rencana trading (bila diminta): tren dan struktur harga, level kunci, volume, ATR; titik masuk, pembatalan (stop), target, rasio risiko-imbalan, ukuran posisi berdasarkan batas risiko per transaksi yang ditetapkan pengguna; likuiditas dan biaya transaksi.
+- Rezim pasar dan makro (suku bunga, kurs, aliran dana asing, IHSG) sebagai konteks, bukan ramalan.
+- Sumber dan tanggal, batasan data, peringatan risiko.
+
+## Pagar tambahan
+- Tidak ada eksekusi transaksi dan tidak terhubung ke akun sekuritas. Tidak menyarankan leverage/margin/short, saham gorengan, atau "tip" tanpa dasar.
+- Saham dengan likuiditas rendah, status pemantauan khusus/suspensi, atau tata kelola bermasalah ditandai menonjol.
+- Bila data tidak memadai: laporan berisi "data tidak cukup untuk menyimpulkan", bukan tebakan.
+- Pernyataan jelas bahwa ini analisis pendukung keputusan, bukan nasihat keuangan berlisensi; keputusan dan risiko di tangan pengguna.
+
+## Tahap yang diperbarui
+| Tahap | Isi |
+|---|---|
+| T0 | Keputusan sumber data dan profil pengguna; struktur `data/saham/` dengan metadata sumber dan tanggal |
+| T1 | Pemuat data (CSV/ekspor/berkas laporan keuangan), pemeriksa kesegaran dan rekonsiliasi, indikator teknikal terverifikasi |
+| T2 | Fundamental dan valuasi berlapis (relatif, DCF/DDM dengan sensitivitas) |
+| T3 | Gerbang `periksa_analisis`, laporan profesional DOCX/PPTX dengan grafik, penyaringan dan skor transparan |
+| T4 | Rekam jejak dan evaluasi kalibrasi, watchlist dan ringkasan terjadwal setelah bursa tutup, peringatan |
+| T5 | Opsional: uji aturan pada data masa lalu (dengan peringatan bias), portofolio dan risiko |
+Uji: data sampel dengan angka acuan; laporan dirender dan dilihat; agen asli menganalisis berkas; kasus "data tidak cukup" dan "sumber bertentangan". Uji sumber langsung hanya di komputer pengguna.
+
+## Keputusan yang dibutuhkan untuk mulai T0/T1
+1. Pasar: IDX saja, atau juga saham AS/global?
+2. Sumber data harga dan laporan keuangan: ekspor platform pengguna (platform apa?), situs resmi IDX/emiten lewat browser, dan/atau penyedia data berbayar berlisensi (paling andal untuk akurasi; ada biaya).
+3. Profil: horizon, toleransi risiko, kisaran modal, batas risiko per transaksi, preferensi (dividen, syariah, LQ45, sektor).
+4. Fokus awal: investasi (fundamental) atau trading (teknikal), atau keduanya.
