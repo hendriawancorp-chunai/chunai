@@ -151,3 +151,7 @@ Pintu 2 dibangun lebih dulu karena paling andal dan memberi dasar data; pintu 1 
 Keputusan pengguna: IDX; sumber = ekspor platform kredibel, situs resmi IDX/emiten, dan sumber gratis; fokus investasi (fundamental) dan trading (teknikal); studi komparatif untuk keputusan jual/beli.
 SELESAI: T0 (penyimpanan + jejak sumber + profil investor) dan T1 (impor unggahan, validasi, analisis teknikal, rencana trading, perbandingan, grafik). Lihat `docs/CATATAN_PROYEK.md` 5l.
 BERIKUTNYA: T2 pintu 1 (pencarian otomatis, pembaca laporan keuangan), fundamental dan valuasi; T3 gerbang `periksa_analisis`, laporan DOCX/PPTX, penyaringan; T4 rekam jejak, watchlist terjadwal.
+
+## Status (20 Okt 2026): T0-T4 SELESAI
+T2 (fundamental, valuasi, unduh berkas), T3 (gerbang periksa_analisis, penyaringan, laporan DOCX), T4 (rekam jejak, watchlist) dibangun dan diuji; lihat `docs/CATATAN_PROYEK.md` 5m.
+Sisa: uji data pasar nyata di komputer pengguna; opsional T5 (uji aturan pada data masa lalu, portofolio), pembanding sektor otomatis.

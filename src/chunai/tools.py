@@ -7,6 +7,8 @@ from claude_agent_sdk import create_sdk_mcp_server, tool
 
 from .docread_tools import docread_tools
 from .formplan_tools import formplan_tools
+from .saham.analysis_tools import analysis_tools
+from .saham.fund_tools import fundamental_tools
 from .saham.tools import saham_tools
 
 from . import data as D
@@ -119,8 +121,9 @@ def build_server(workdir: Path, web=None, outbox: list | None = None, fetch_log:
     async def hapus_jadwal(args):
         return _ok("Jadwal dihapus." if sch.remove(spath, args.get("id", "")) else "Id jadwal tidak ditemukan.")
 
+    saham_reg: list[str] = []          # keluaran tool saham sesi ini (untuk penelusuran angka di periksa_analisis)
     tools = [periksa_laporan, profil_data, buat_grafik, jalankan_python, kirim_file, buat_jadwal, daftar_jadwal, hapus_jadwal,
-             *office_tools(workdir, fetch_log=fetch_log), *media_tools(workdir), *docread_tools(workdir), *formplan_tools(workdir, web), *saham_tools(workdir)]
+             *office_tools(workdir, fetch_log=fetch_log), *media_tools(workdir), *docread_tools(workdir), *formplan_tools(workdir, web), *saham_tools(workdir, saham_reg), *fundamental_tools(workdir, saham_reg), *analysis_tools(workdir, saham_reg)]
     if web is not None:
         tools += _web_tools(web, _ok, _err)
     return create_sdk_mcp_server("chunai", tools=tools)

@@ -12,10 +12,13 @@ from . import impor, profil, store, teknikal, validasi
 from .store import SahamError
 
 
-def saham_tools(workdir: Path):
+def saham_tools(workdir: Path, reg: list[str] | None = None):
     workdir = workdir.resolve()
 
-    def ok(t): return {"content": [{"type": "text", "text": t}]}
+    def ok(t):
+        if reg is not None:
+            reg.append(t)
+        return {"content": [{"type": "text", "text": t}]}
     def err(t): return {"content": [{"type": "text", "text": t}], "is_error": True}
 
     def guard(fn):

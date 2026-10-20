@@ -8,7 +8,7 @@ from typing import Awaitable, Callable
 from .audit import AuditLog
 from urllib.parse import urlparse
 
-from .policy import WEB_FINAL_TOOLS, WEB_OPEN_TOOL, Decision, classify
+from .policy import DOWNLOAD_TOOL, WEB_FINAL_TOOLS, WEB_OPEN_TOOL, Decision, classify
 
 
 @dataclass
@@ -52,7 +52,7 @@ class ApprovalGate:
             self.audit.record("denied_by_policy", tool=tool, input=tool_input)
             return ApprovalResult(False, "Diblokir oleh kebijakan keamanan ChunAI.")
         # aksi final web tidak pernah masuk "selalu izinkan"
-        always_ok = tool in self.auto_approve and tool not in WEB_FINAL_TOOLS and tool != WEB_OPEN_TOOL
+        always_ok = tool in self.auto_approve and tool not in WEB_FINAL_TOOLS and tool not in (WEB_OPEN_TOOL, DOWNLOAD_TOOL)
         if decision is Decision.AUTO or always_ok:
             self.audit.record("auto_allowed", tool=tool)
             return ApprovalResult(True)
@@ -88,7 +88,7 @@ class ApprovalGate:
                 await self.on_final_approved(tool, tool_input)
             except Exception:
                 pass
-        if result.approved and tool == WEB_OPEN_TOOL:
+        if result.approved and tool in (WEB_OPEN_TOOL, DOWNLOAD_TOOL):
             host = (urlparse(str((result.updated_input or tool_input).get("url", ""))).hostname or "").lower()
             host = host[4:] if host.startswith("www.") else host
             if host:

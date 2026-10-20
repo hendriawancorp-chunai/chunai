@@ -136,6 +136,22 @@ Verifikasi: indikator dicocokkan dengan hitungan acuan independen (RSI Wilder de
 analisis, 2 opsi stop, angka cocok hitung ulang (95 lot, rugi ≈ Rp2,08 jt), menyatakan fundamental/valuasi/berita/dividen BELUM dianalisis dan tidak memberi kepastian. Tes 237 lolos.
 BELUM: T2 pencarian otomatis (pintu 1) + fundamental + valuasi (relatif, DCF/DDM), T3 gerbang `periksa_analisis` + laporan DOCX/PPTX + penyaringan, T4 rekam jejak + watchlist terjadwal. Uji dengan data pasar NYATA hanya di komputer pengguna.
 
+## 5m. Skill saham T2-T4 (20 Okt 2026)
+- **Fundamental** (`saham/fundamental.py`, `fund_tools.py`): `catat_fundamental` mencatat angka dari PDF laporan keuangan HANYA bila `teks_angka` terbukti ada di halaman yang disebut dan cocok dengan nilai (satuan Rp dikonversi; capex mutlak; periode kumulatif
+  `YYYY-FY|9M|6M|3M`; jejak sumber+halaman per angka); `impor_fundamental` (XLSX/CSV, label dipetakan); `analisis_fundamental` (margin, ROE rata-rata ekuitas, DER, FCF, CFO/laba, TTM = FY lalu + YTD − YTD tahun lalu, EPS, BVPS, PER, PBV, yield, payout; rekonsiliasi
+  aset=liabilitas+ekuitas, satuan antar periode, laporan lama). `valuasi_saham`: DCF (FCF sebagai proksi), DDM dua tahap, relatif (butuh sumber pembanding); asumsi WAJIB eksplisit, batas wajar (diskonto 5-30%, g terminal -2..7%, r−g >= 1 poin), rentang sensitivitas 3x3,
+  porsi nilai terminal, margin of safety. Diverifikasi dengan hitungan acuan independen.
+- **Pintu 1:** `unduh_berkas` (`download.py`): PDF/XLSX/CSV dari domain yang disetujui lewat kartu (sama seperti buka_halaman; privat ditolak; pengalihan diperiksa per langkah; jenis dicek dari isi, HTML/login ditolak; maks 30 MB; jejak URL disimpan).
+  Situs yang memblokir otomatisasi: agen meminta unggahan, tidak mengakali. BELUM diuji di situs IDX/emiten asli (hanya server uji lokal).
+- **Gerbang kualitas** `periksa_analisis` (`lint.py`): wajib pernyataan bukan nasihat, tanggal data, sumber, risiko, keterbatasan; skenario pesimis + syarat pembatalan bila ada rekomendasi; asumsi bila ada klaim valuasi; larangan kata kepastian;
+  penelusuran angka ke keluaran tool sesi ini (registri; angka tak tertelusuri = peringatan, >50% = gagal).
+- **Penyaringan** `saring_saham` (`screen.py`): skor 0-100 per faktor (kualitas, valuasi, momentum, risiko) dengan ambang tetap; bobot mengikuti horizon/toleransi/preferensi dividen; faktor tanpa data dilewati dan bobot dinormalkan; filter; tanggal data berbeda diperingatkan.
+- **Rekam jejak + watchlist** (`track.py`): `catat_rekomendasi`, `evaluasi_rekam_jejak` (return, target/pembatalan, relatif indeks, ketepatan per keyakinan, catatan sampel < 20 belum bermakna), `watchlist_atur`, `periksa_watchlist` (penembusan level, RSI ekstrem, lonjakan volume, data tidak segar;
+  untuk jadwal: hanya membaca data tersimpan).
+- Uji agen asli (TLKM sintetis + 2 PDF laporan keuangan): profil, impor, 2 pencatatan fundamental terverifikasi, teknikal, fundamental, valuasi DCF (angka cocok hitung ulang Rp32.222/saham), grafik, rencana trading, laporan DOCX 6 halaman (dirender dan dilihat: grafik, tabel, sensitivitas, skenario, footer),
+  `periksa_analisis` 2x sampai LOLOS. Agen MENDETEKSI data sintetis yang tak masuk akal (PER 1,6x, DCF 8,6x harga) dan menolak memberi kesimpulan beli/jual, meminta laporan lengkap. Tes 254 lolos.
+- Belum: uji data pasar nyata (hanya di komputer pengguna), pembanding sektor otomatis, backtest aturan skrining (opsional).
+
 ## 6. Pelajaran / kesalahan yang jangan diulang
 - Blok multi-baris yang ditempel merusak `read -rsp` → beri **satu baris per kali**; kini `chunai auth` dan `chunai setup-telegram` otomatis.
 - `cp -r SRC ~/chunai` ke folder yang sudah ada membuat folder bertingkat → pakai `cp -r SRC/. ~/chunai/`.

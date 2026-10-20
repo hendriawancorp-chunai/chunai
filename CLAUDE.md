@@ -9,7 +9,7 @@ Dibangun di atas Claude Agent SDK (Python). Antarmuka: Telegram dan Web. Berjala
 
 ## Perintah
 ```bash
-python3 -m venv .venv && . .venv/bin/activate && pip install -e . && pytest -q     # 237 tes, harus lolos sebelum commit
+python3 -m venv .venv && . .venv/bin/activate && pip install -e . && pytest -q     # 254 tes, harus lolos sebelum commit
 chunai doctor [--live] | chunai audit | chunai serve | chunai telegram | chunai web
 ```
 

@@ -173,6 +173,13 @@ Kirim berkas DOCX atau PPTX ke bot (Telegram) atau unggah di Web, lalu tulis per
 3. ChunAI menyimpan profil (kartu izin), mengimpor dengan mencatat sumber, memeriksa kualitas data (kesegaran, bolong, lonjakan), lalu analisis dan rencana ukuran lot dari batas rugi Anda. "Bandingkan TLKM BBRI BMRI" untuk studi komparatif.
 Data tersimpan lokal di `data/saham/`. Hasil adalah pandangan teknikal; fundamental, valuasi, dan berita menyusul (belum ada). Bukan nasihat keuangan berlisensi; keputusan dan risiko ada pada Anda.
 
+## Analisis saham lanjutan (fundamental, valuasi, laporan, rekam jejak)
+- **Laporan keuangan:** unggah PDF laporan keuangan emiten (atau minta ChunAI mencarinya di situs bursa/emiten; Anda menyetujui situsnya lewat kartu; bila situs memblokir, unduh sendiri lalu unggah). ChunAI mencatat angka kunci HANYA bila terbukti ada di halaman yang disebut.
+- **Perintah contoh:** "Analisis lengkap TLKM: teknikal, fundamental, valuasi DCF dengan asumsi yang dijelaskan, risiko, dan laporan DOCX." / "Bandingkan TLKM, BBRI, BMRI dan saring yang cocok dengan profil saya." / "Catat rekomendasi itu" / "Evaluasi rekam jejak rekomendasi saya."
+- **Pemantauan:** "Masukkan TLKM ke watchlist, beri tahu bila menembus 3.500" lalu "Setiap hari bursa 16.30 periksa watchlist saya" (pengingat/tugas terjadwal; hanya membaca data tersimpan, jadi perbarui data harga dulu).
+- Laporan diperiksa gerbang kualitas (sumber, tanggal data, risiko, skenario pesimis, pembatalan, tanpa kata kepastian, angka ditelusuri) sebelum dikirim. Bila data tampak janggal, ChunAI berhenti dan meminta data yang benar, bukan memaksakan kesimpulan.
+- Bukan nasihat keuangan berlisensi; hasil masa lalu tidak menjamin hasil ke depan.
+
 ## Meringkas dokumen panjang
 Kirim PDF/DOCX/PPTX (satu atau beberapa berkas) lalu tulis, mis. "Ringkas laporan ini menjadi 5 butir temuan dengan halaman" atau "Di mana dokumen ini menyebut anggaran 2026?". Setiap butir diberi nomor halaman
 dan kutipan langsung diverifikasi terhadap dokumennya. PDF hasil pindai (berupa gambar) belum bisa dibaca. Dokumen sangat panjang dibaca bertahap oleh beberapa "pembaca" sehingga butuh beberapa menit.

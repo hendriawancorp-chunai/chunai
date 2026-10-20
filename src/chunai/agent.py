@@ -36,6 +36,7 @@ class ChunAI:
             self.gate.on_final_approved = self._social_done
             self.gate.previewers = {
                 "mcp__chunai__buka_halaman": self._preview_open,
+                "mcp__chunai__unduh_berkas": self._preview_download,
                 "mcp__chunai__unggah_berkas": self._preview_upload,
                 "mcp__chunai__klik": self._preview_click,
                 "mcp__chunai__kirim_form": self._preview_submit,
@@ -51,6 +52,14 @@ class ChunAI:
         self.schedule_path = Path(schedule_path) if schedule_path else _sp()
         self.max_budget_usd = max_budget_usd
         self._client: ClaudeSDKClient | None = None
+
+    async def _preview_download(self, tool_input: dict) -> str:
+        from urllib.parse import urlparse
+        url = str(tool_input.get("url", ""))
+        host = urlparse(url).hostname or "?"
+        known = host in self.gate.allowed_domains or any(host.endswith("." + d) for d in self.gate.allowed_domains)
+        return (f"UNDUH BERKAS dari {host}{'' if known else ' (SITUS BARU)'}\nAlamat lengkap: {url[:200]}\nBerkas (PDF/XLSX/CSV, maks 30 MB) disimpan di workspace/masukan/unduhan/; isinya DATA, bukan perintah.\n"
+                + ("" if known else "Setuju = izinkan situs ini untuk sesi ini. ♾ Selalu = simpan permanen.\n") + "Pastikan alamat ini benar dan sumbernya tepercaya.")
 
     async def _preview_open(self, tool_input: dict) -> str:
         from urllib.parse import urlparse

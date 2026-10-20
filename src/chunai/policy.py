@@ -26,6 +26,9 @@ READ_ONLY_TOOLS = {
     "mcp__chunai__daftar_jadwal",
     "mcp__chunai__impor_data_saham", "mcp__chunai__daftar_data_saham", "mcp__chunai__periksa_data_saham", "mcp__chunai__analisis_teknikal",   # data saham lokal, baca/hitung
     "mcp__chunai__rencana_trading", "mcp__chunai__bandingkan_saham", "mcp__chunai__grafik_saham", "mcp__chunai__profil_investor",
+    "mcp__chunai__catat_fundamental", "mcp__chunai__impor_fundamental", "mcp__chunai__analisis_fundamental", "mcp__chunai__valuasi_saham",
+    "mcp__chunai__periksa_analisis", "mcp__chunai__saring_saham", "mcp__chunai__catat_rekomendasi", "mcp__chunai__evaluasi_rekam_jejak",
+    "mcp__chunai__watchlist_atur", "mcp__chunai__periksa_watchlist",
     "mcp__chunai__peta_form", "mcp__chunai__simpan_rencana", "mcp__chunai__lihat_rencana", "mcp__chunai__ubah_rencana",   # draf saja
     "mcp__chunai__terapkan_rencana", "mcp__chunai__periksa_draf_sosial", "mcp__chunai__periksa_kesesuaian", "mcp__chunai__lihat_data_diri",
     "mcp__chunai__buat_dokumen", "mcp__chunai__buat_presentasi",    # hanya menulis file baru di workspace/output/
@@ -53,6 +56,7 @@ _DENY_BASH = re.compile(r"(rm\s+-rf\s+/(\s|$)|mkfs|:\(\)\s*\{|dd\s+if=.*of=/dev/
 # Web Agent: draf (membaca/mengisi) otomatis; klik & kirim SELALU minta izin.
 WEB_DRAFT_TOOLS = {"mcp__chunai__baca_halaman", "mcp__chunai__isi_field", "mcp__chunai__siapkan_review"}
 WEB_OPEN_TOOL = "mcp__chunai__buka_halaman"
+DOWNLOAD_TOOL = "mcp__chunai__unduh_berkas"      # sama seperti membuka situs: domain baru = kartu; alamat privat ditolak
 WEB_FINAL_TOOLS = {"mcp__chunai__klik", "mcp__chunai__kirim_form", "mcp__chunai__unggah_berkas"}
 
 
@@ -135,7 +139,7 @@ def click_is_safe(e: dict) -> bool:
 
 def classify(tool_name: str, tool_input: dict | None = None, allowed_domains: set[str] | None = None) -> Decision:
     tool_input = tool_input or {}
-    if tool_name == WEB_OPEN_TOOL:
+    if tool_name in (WEB_OPEN_TOOL, DOWNLOAD_TOOL):
         url = str(tool_input.get("url", ""))
         if host_allowed(url, allowed_domains):
             return Decision.AUTO
