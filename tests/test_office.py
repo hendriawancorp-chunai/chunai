@@ -120,3 +120,22 @@ def test_fabricated_author_is_not_printed(tmp_path):
     spec["author"] = "Budi Santoso"
     d = Document(str(build_docx(spec, tmp_path / "b.docx", Theme(), Path("."))))
     assert any("Budi Santoso" in p.text for p in d.paragraphs)
+
+
+def test_shrink_image_keeps_agent_reads_small(tmp_path):
+    import numpy as np
+    from PIL import Image
+
+    from chunai.office.tools import shrink_image
+    rng = np.random.default_rng(0)
+    p = tmp_path / "besar.png"
+    Image.fromarray(rng.integers(0, 255, (3000, 2400, 3), dtype=np.uint8)).save(p)          # derau acak: sulit dimampatkan (> 10 MB)
+    assert p.stat().st_size > 5_000_000
+    shrink_image(p)
+    assert p.stat().st_size <= 700_000 and Image.open(p).width <= 1600
+
+
+def test_agent_options_allow_large_messages(tmp_path):
+    from chunai.agent import ChunAI
+    a = ChunAI(None, workdir=tmp_path / "ws", audit_path=tmp_path / "a.jsonl")
+    assert a._options().max_buffer_size >= 16 * 1024 * 1024

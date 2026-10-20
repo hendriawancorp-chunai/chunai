@@ -412,6 +412,11 @@ class WebSession:
         safe = re.sub(r"[^\w-]", "_", name)[:30] or "review"
         path = out / f"{safe}_{time.strftime('%H%M%S')}.png"
         await self.page.screenshot(path=str(path), full_page=True)
+        try:
+            from .office.tools import shrink_image
+            shrink_image(path, 1400, 600_000)
+        except Exception:
+            pass
         return path
 
     async def review(self) -> str:

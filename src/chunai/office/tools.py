@@ -18,6 +18,22 @@ from .revise import ReviseError, outline_docx, outline_pptx, revise_docx, revise
 from .theme import load_theme
 
 
+def shrink_image(path: Path, max_w: int = 1600, max_bytes: int = 700_000) -> Path:
+    """Perkecil PNG agar aman dibaca agen (hasil tool dikirim sebagai pesan JSON; gambar sangat besar membuat galat buffer)."""
+    from PIL import Image
+    im = Image.open(path)
+    if im.width > max_w:
+        im = im.resize((max_w, int(im.height * max_w / im.width)))
+    im = im.convert("RGB")
+    im.save(path, optimize=True)
+    for q in (1.0, 0.8, 0.65, 0.5):                                  # masih besar: kecilkan lagi
+        if path.stat().st_size <= max_bytes:
+            break
+        im = im.resize((int(im.width * q), int(im.height * q)))
+        im.save(path, optimize=True)
+    return path
+
+
 def contact_sheet(pngs: list[Path], out: Path, cols: int = 2) -> Path:
     from PIL import Image
     ims = [Image.open(p).convert("RGB") for p in pngs]
@@ -26,10 +42,8 @@ def contact_sheet(pngs: list[Path], out: Path, cols: int = 2) -> Path:
     sheet = Image.new("RGB", (w * cols + 10 * (cols - 1), h * rows + 10 * (rows - 1)), "#888888")
     for k, im in enumerate(ims):
         sheet.paste(im, ((k % cols) * (w + 10), (k // cols) * (h + 10)))
-    if sheet.width > 2400:
-        sheet = sheet.resize((2400, int(sheet.height * 2400 / sheet.width)))
     sheet.save(out)
-    return out
+    return shrink_image(out)
 
 
 def _unique(path: Path) -> Path:

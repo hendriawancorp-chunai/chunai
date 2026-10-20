@@ -203,6 +203,7 @@ class ChunAI:
             permission_mode="default",
             model=self.model,
             max_budget_usd=self.max_budget_usd,
+            max_buffer_size=32 * 1024 * 1024,      # gambar (pratinjau/screenshot) dalam hasil tool bisa > 1 MB bawaan SDK
         )
 
     async def __aenter__(self):

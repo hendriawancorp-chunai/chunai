@@ -152,6 +152,10 @@ BELUM: T2 pencarian otomatis (pintu 1) + fundamental + valuasi (relatif, DCF/DDM
   `periksa_analisis` 2x sampai LOLOS. Agen MENDETEKSI data sintetis yang tak masuk akal (PER 1,6x, DCF 8,6x harga) dan menolak memberi kesimpulan beli/jual, meminta laporan lengkap. Tes 254 lolos.
 - Belum: uji data pasar nyata (hanya di komputer pengguna), pembanding sektor otomatis, backtest aturan skrining (opsional).
 
+## 5n. Galat "CLIJSONDecodeError: JSON message exceeded maximum buffer size" (20 Okt 2026)
+Penyebab (terbukti): hasil tool/Read berisi gambar besar (pratinjau halaman/lembar kontak/screenshot) melewati batas 1 MB bawaan SDK untuk satu pesan JSON dari CLI. Perbaikan: `max_buffer_size` 32 MB di `ChunAI._options`,
+dan gambar yang dibuat ChunAI diperkecil (`shrink_image`: lebar maks 1600 px, <= ±700 KB). Teruji: agen asli membaca PNG 6,6 MB tanpa galat.
+
 ## 6. Pelajaran / kesalahan yang jangan diulang
 - Blok multi-baris yang ditempel merusak `read -rsp` → beri **satu baris per kali**; kini `chunai auth` dan `chunai setup-telegram` otomatis.
 - `cp -r SRC ~/chunai` ke folder yang sudah ada membuat folder bertingkat → pakai `cp -r SRC/. ~/chunai/`.
