@@ -147,3 +147,47 @@ def test_explicit_kirim_file_choice_overrides_autodetect(client):
         ws.send_json({"type": "message", "text": "pilihfinal"})
         names = [m["name"] for m in collect_until(ws) if m["type"] == "file"]
         assert names == ["kajian_2.docx"]                         # versi perantara kajian.docx tidak ikut
+
+
+@pytest.fixture
+def open_client(fake_factory, tmp_path):
+    mgr = SessionManager(fake_factory, tmp_path, approval_timeout=5)
+    with TestClient(create_app(mgr, auth_off=True), base_url="http://localhost:8787") as c:
+        yield c
+
+
+def test_auth_off_config_and_chat_without_token(open_client):
+    assert open_client.get("/config").json() == {"auth": False}
+    with open_client.websocket_connect("/ws", headers={"host": "localhost:8787"}) as ws:
+        ws.send_json({"type": "auth", "token": ""})
+        assert ws.receive_json()["type"] == "ready"
+
+
+def test_auth_on_config_reports_auth(client):
+    assert client.get("/config").json() == {"auth": True}
+
+
+def test_auth_off_rejects_foreign_host_and_cross_site(open_client):
+    assert open_client.get("/config", headers={"host": "evil.example"}).status_code == 403
+    assert open_client.get("/config", headers={"sec-fetch-site": "cross-site"}).status_code == 403
+    r = open_client.post("/upload", files={"file": ("a.txt", b"x")}, headers={"origin": "http://evil.example"})
+    assert r.status_code == 403
+    with pytest.raises(WebSocketDisconnect):
+        with open_client.websocket_connect("/ws", headers={"origin": "http://evil.example"}) as ws:
+            ws.receive_json()
+
+
+def test_auth_off_upload_without_bearer(open_client):
+    r = open_client.post("/upload", files={"file": ("a.txt", b"halo")})
+    assert r.status_code == 200 and r.json()["path"].endswith("a.txt")
+
+
+def test_auth_off_signed_files_still_need_signature(open_client):
+    assert open_client.get("/files?p=a.txt&e=9999999999&s=abc").status_code == 403
+
+
+def test_serve_refuses_auth_off_on_public_host(monkeypatch):
+    from chunai.interfaces import web
+    monkeypatch.setenv("CHUNAI_WEB_AUTH", "off")
+    with pytest.raises(SystemExit):
+        web.serve(host="0.0.0.0")

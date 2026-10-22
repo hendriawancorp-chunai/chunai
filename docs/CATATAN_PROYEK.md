@@ -192,3 +192,6 @@ Saat kembali: minta hasil `chunai audit 300` + catatan, jawab 7 pertanyaan evalu
 ## 8. Cara melanjutkan di sesi baru
 Tempel kira-kira: *"Lanjutkan proyek ChunAI. Baca `CLAUDE.md` dan `docs/CATATAN_PROYEK.md`, lalu kita kerjakan Tahap 3: …"*.
 Di sesi cloud: tambahkan repo (`hendriawancorp-chunai/chunai`), clone, `pip install -e . && pytest -q`.
+
+## 5o. Web tanpa token (22 Okt 2026)
+Permintaan pengguna: akses Web tanpa token. Dibuat opt-in `CHUNAI_WEB_AUTH=off` (default tetap wajib token). Hanya loopback (serve menolak host lain), middleware `local_request_ok` (Host loopback, Origin==Host, Sec-Fetch-Site same-origin/none), `/config` memberi tahu UI agar langsung connect, kunci penandatangan unduhan acak. Approval gate tidak berubah. 262 tes.

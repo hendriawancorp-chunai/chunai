@@ -22,6 +22,30 @@ from .core import MAX_UPLOAD_BYTES, SessionManager, save_upload
 STATIC = Path(__file__).parent / "static"
 SESSION_KEY = "web"
 URL_TTL = 3600
+LOOPBACK = ("127.0.0.1", "localhost", "::1")
+
+
+def auth_off_requested() -> bool:
+    return os.environ.get("CHUNAI_WEB_AUTH", "").strip().lower() in ("off", "none", "0", "false")
+
+
+def _hostname(host: str | None) -> str:
+    h = (host or "").strip().lower()
+    if h.startswith("["):
+        return h[1:].split("]")[0]
+    return h.rsplit(":", 1)[0] if h.count(":") == 1 else h
+
+
+def local_request_ok(headers) -> bool:
+    """Mode tanpa token: hanya permintaan yang benar-benar dari halaman ChunAI di komputer ini.
+    Host harus loopback (anti DNS rebinding); Origin harus sama dengan Host; Sec-Fetch-Site tidak boleh lintas situs (anti CSRF)."""
+    host = headers.get("host")
+    if _hostname(host) not in LOOPBACK:
+        return False
+    origin = headers.get("origin")
+    if origin and urlparse(origin).netloc != host:
+        return False
+    return headers.get("sec-fetch-site", "same-origin") in ("same-origin", "none")
 
 
 class WebChannel:
@@ -46,8 +70,9 @@ class WebChannel:
                           "image": self.sign(image) if image else None})
 
 
-def create_app(manager: SessionManager, token: str | None = None) -> FastAPI:
-    token = token or os.environ.get("CHUNAI_WEB_TOKEN") or secrets.token_urlsafe(24)
+def create_app(manager: SessionManager, token: str | None = None, auth_off: bool = False) -> FastAPI:
+    # auth_off: tanpa token, tetapi hanya untuk halaman lokal; token acak per-proses tetap dipakai sebagai kunci tanda tangan unduhan.
+    token = secrets.token_urlsafe(32) if auth_off else (token or os.environ.get("CHUNAI_WEB_TOKEN") or secrets.token_urlsafe(24))
     @asynccontextmanager
     async def lifespan(_app):
         yield
@@ -55,10 +80,22 @@ def create_app(manager: SessionManager, token: str | None = None) -> FastAPI:
 
     app = FastAPI(title="ChunAI", docs_url=None, redoc_url=None, openapi_url=None, lifespan=lifespan)
     app.state.token = token
+    app.state.auth_off = auth_off
     state = {"ws": None}
 
     def ok_token(t: str | None) -> bool:
         return bool(t) and hmac.compare_digest(t.encode(), token.encode())
+
+    if auth_off:
+        @app.middleware("http")
+        async def local_only(request, call_next):
+            if not local_request_ok(request.headers):
+                return JSONResponse({"detail": "Ditolak: hanya dari komputer ini."}, status_code=403)
+            return await call_next(request)
+
+    @app.get("/config")
+    async def config():
+        return {"auth": not auth_off}
 
     def workdir() -> Path:
         return manager.get(SESSION_KEY).workdir
@@ -81,7 +118,7 @@ def create_app(manager: SessionManager, token: str | None = None) -> FastAPI:
 
     @app.post("/upload")
     async def upload(file: UploadFile = File(...), authorization: str | None = Header(None)):
-        if not ok_token((authorization or "").removeprefix("Bearer ").strip()):
+        if not auth_off and not ok_token((authorization or "").removeprefix("Bearer ").strip()):
             raise HTTPException(401, "Token salah")
         data = await file.read(MAX_UPLOAD_BYTES + 1)
         try:
@@ -106,7 +143,7 @@ def create_app(manager: SessionManager, token: str | None = None) -> FastAPI:
     @app.websocket("/ws")
     async def ws_endpoint(ws: WebSocket):
         origin = ws.headers.get("origin")
-        if origin and urlparse(origin).netloc != ws.headers.get("host"):
+        if (auth_off and not local_request_ok(ws.headers)) or (origin and urlparse(origin).netloc != ws.headers.get("host")):
             await ws.close(code=4403)                       # cegah cross-site WebSocket hijacking
             return
         await ws.accept()
@@ -114,7 +151,7 @@ def create_app(manager: SessionManager, token: str | None = None) -> FastAPI:
             first = json.loads(await asyncio.wait_for(ws.receive_text(), 15))
         except Exception:
             await ws.close(code=4400); return
-        if first.get("type") != "auth" or not ok_token(first.get("token")):
+        if first.get("type") != "auth" or not (auth_off or ok_token(first.get("token"))):
             await asyncio.sleep(1)
             await ws.send_text(json.dumps({"type": "error", "text": "Token salah."}))
             await ws.close(code=4401); return
@@ -175,10 +212,17 @@ def serve(host: str = "127.0.0.1", port: int = 8787):
     import uvicorn
 
     from .core import default_agent_factory
+    off = auth_off_requested()
+    if off and host not in LOOPBACK:
+        raise SystemExit("CHUNAI_WEB_AUTH=off hanya boleh dengan alamat 127.0.0.1/localhost. Hapus pengaturan itu atau kembalikan CHUNAI_HOST.")
     token, generated = resolve_token()
     mgr = SessionManager(default_agent_factory())
-    app = create_app(mgr, token)
-    if host not in ("127.0.0.1", "localhost", "::1"):
+    app = create_app(mgr, token, auth_off=off)
+    if off:
+        print(f"ChunAI Web: http://{host}:{port}\nTanpa token (CHUNAI_WEB_AUTH=off): hanya dapat dibuka dari komputer ini.")
+        uvicorn.run(app, host=host, port=port, log_level="warning")
+        return
+    if host not in LOOPBACK:
         print("⚠ Server tidak hanya di localhost. Gunakan HTTPS (reverse proxy/tunnel) dan token yang kuat.")
     print(f"ChunAI Web: http://{host}:{port}\nToken akses: {token if generated else '(dari CHUNAI_WEB_TOKEN di .env)'}")
     uvicorn.run(app, host=host, port=port, log_level="warning")

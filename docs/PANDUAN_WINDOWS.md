@@ -118,6 +118,7 @@ Opsional: `chunai telegram-check` memastikan token bot dan ID benar.
 ./scripts/run.sh
 ```
 - **Web:** buka `http://localhost:8787` di browser Windows, masukkan token dari `CHUNAI_WEB_TOKEN` di `.env`
+  - **Tanpa token (opsional):** tambahkan baris `CHUNAI_WEB_AUTH=off` ke `.env`, lalu jalankan ulang. Halaman langsung terbuka tanpa kata sandi, hanya dari komputer ini (alamat selain localhost ditolak). Siapa pun yang memakai komputer/akun Windows Anda dapat memakai ChunAI; kartu izin tetap berlaku.
   (`cat .env | grep WEB`).
 - **Telegram:** kirim `/start` ke bot Anda.
 - Skrip akan memulai ulang ChunAI otomatis bila berhenti. Hentikan dengan `Ctrl+C`.

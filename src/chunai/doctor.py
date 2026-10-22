@@ -65,7 +65,13 @@ def security_checks() -> list[Check]:
         c.append(Check("Keamanan: izin .env", mode & 0o077 == 0, "600 (hanya Anda)" if mode & 0o077 == 0 else
                        f"{oct(mode)} terlalu terbuka. Jalankan: chmod 600 {envf}", critical=False))
     wt = os.environ.get("CHUNAI_WEB_TOKEN", "")
-    if wt:
+    from .interfaces.web import auth_off_requested
+    if auth_off_requested():
+        h = os.environ.get("CHUNAI_HOST", "127.0.0.1")
+        c.append(Check("Keamanan: Web tanpa token", h in ("127.0.0.1", "localhost", "::1"),
+                       "aktif, hanya komputer ini (CHUNAI_WEB_AUTH=off)" if h in ("127.0.0.1", "localhost", "::1") else
+                       "CHUNAI_WEB_AUTH=off tetapi CHUNAI_HOST bukan localhost; server menolak start", critical=False))
+    elif wt:
         c.append(Check("Keamanan: kekuatan token Web", len(wt) >= 24, f"panjang {len(wt)}" if len(wt) >= 24 else
                        "terlalu pendek (min. 24 karakter). Hapus nilainya di .env lalu jalankan ulang install_wsl.sh atau isi token acak panjang", critical=False))
     host = os.environ.get("CHUNAI_HOST", "127.0.0.1")

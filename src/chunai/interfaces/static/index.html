@@ -41,7 +41,7 @@ input{font:inherit;padding:10px 12px;border-radius:10px;border:1px solid var(--b
 <textarea id="in" rows="1" placeholder="Tulis perintah…"></textarea>
 <button class="bad" id="stop" hidden>Stop</button><button class="pri" id="send">Kirim</button></div></footer>
 <script>
-const $=id=>document.getElementById(id);let ws,token=sessionStorage.getItem('chunai_token')||'',busy=false,retry=0;
+const $=id=>document.getElementById(id);let ws,token=sessionStorage.getItem('chunai_token')||'',busy=false,retry=0,noauth=false;
 const log=$('log');
 function esc(s){return s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
 function fmt(t){return esc(t).replace(/`([^`]+)`/g,'<code>$1</code>').replace(/\*\*([^*]+)\*\*/g,'<b>$1</b>')
@@ -58,7 +58,7 @@ function connect(){
     else if(m.type=='busy')setBusy(true);else if(m.type=='done')setBusy(false);
     else if(m.type=='file'){add('file',(m.image?'<img src="'+m.url+'" alt="'+esc(m.name)+'"><br>':'')+'📄 <a href="'+m.url+'" download>'+esc(m.name)+'</a>')}
     else if(m.type=='approval')approval(m)};
-  ws.onclose=()=>{setBusy(false);$('dot').className='dot';if(token&&retry<8)setTimeout(connect,Math.min(1000*++retry,8000))}}
+  ws.onclose=()=>{setBusy(false);$('dot').className='dot';if((token||noauth)&&retry<8)setTimeout(connect,Math.min(1000*++retry,8000))}}
 function approval(m){
   const d=add('appr','<h3>🔒 Permintaan izin: '+esc(m.tool)+'</h3>'+(m.image?'<img src="'+m.image+'" alt="Tangkapan layar review">':'')+'<pre></pre><div class="row"></div>');
   d.querySelector('pre').textContent=m.summary;const row=d.querySelector('.row');
@@ -76,7 +76,7 @@ $('fi').onchange=async e=>{const f=e.target.files[0];if(!f)return;const fd=new F
   try{const r=await fetch('/upload',{method:'POST',headers:{Authorization:'Bearer '+token},body:fd});const j=await r.json();
     add('note',r.ok?'📎 File diterima: '+esc(j.path)+' — sebutkan apa yang ingin dilakukan.':'Gagal unggah: '+esc(j.detail||r.status))}catch(x){add('note','Gagal unggah.')}e.target.value=''};
 $('lf').onsubmit=e=>{e.preventDefault();token=$('tok').value.trim();$('lerr').textContent='';if(ws)ws.close();connect()};
-if(token){connect()}
+fetch('/config').then(r=>r.json()).then(c=>{if(c.auth===false){noauth=true;$('login').hidden=true;connect()}else if(token){connect()}}).catch(()=>{if(token)connect()})
 </script>
 </body>
 </html>

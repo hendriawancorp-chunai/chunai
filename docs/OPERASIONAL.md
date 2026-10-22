@@ -64,3 +64,4 @@ tidak tertimpa. Hentikan ChunAI sebelum menyalin dan jalankan ulang sesudahnya.
 - **Claude:** `chunai auth` (token baru otomatis tersimpan; cabut yang lama di pengaturan akun Claude bila perlu).
 - **Telegram:** di @BotFather `/revoke` pada bot, lalu `chunai setup-telegram`.
 - **Web:** ganti nilai `CHUNAI_WEB_TOKEN` di `.env` dengan teks acak panjang, jalankan ulang.
+- **Web tanpa token:** `CHUNAI_WEB_AUTH=off` (opt-in). Hanya jalan di 127.0.0.1; server menolak start bila `CHUNAI_HOST` bukan localhost. Pengaman: validasi Host (anti DNS rebinding), Origin/Sec-Fetch-Site (anti CSRF/WebSocket lintas situs), unduhan tetap bertanda tangan dengan kunci acak per-proses. Risiko: proses lain di komputer yang sama bisa memakai ChunAI.
