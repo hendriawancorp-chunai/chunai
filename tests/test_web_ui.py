@@ -191,3 +191,23 @@ def test_serve_refuses_auth_off_on_public_host(monkeypatch):
     monkeypatch.setenv("CHUNAI_WEB_AUTH", "off")
     with pytest.raises(SystemExit):
         web.serve(host="0.0.0.0")
+
+
+def test_run_serve_passes_auth_off(monkeypatch):
+    import asyncio
+
+    import uvicorn
+
+    from chunai import cli
+    from chunai.interfaces import core, web
+    seen = {}
+    monkeypatch.setenv("CHUNAI_WEB_AUTH", "off")
+    monkeypatch.delenv("CHUNAI_TELEGRAM_TOKEN", raising=False)
+    monkeypatch.setattr(core, "default_agent_factory", lambda: None)
+    monkeypatch.setattr(web, "create_app", lambda m, t, auth_off=False: seen.setdefault("off", auth_off) or object())
+    class S:
+        def __init__(self, c): pass
+        async def serve(self): pass
+    monkeypatch.setattr(uvicorn, "Server", S)
+    asyncio.run(cli.run_serve())
+    assert seen["off"] is True

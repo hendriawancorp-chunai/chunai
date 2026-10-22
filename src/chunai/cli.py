@@ -143,13 +143,16 @@ async def run_serve() -> None:
 
     from .interfaces.core import SessionManager, default_agent_factory
     from .interfaces.telegram import TelegramBot, allowed_ids_from_env
-    from .interfaces.web import create_app
+    from .interfaces.web import LOOPBACK, auth_off_requested, create_app, resolve_token
     mgr = SessionManager(default_agent_factory())
-    from .interfaces.web import resolve_token
-    token, generated = resolve_token()
-    app = create_app(mgr, token)
     host, port = os.environ.get("CHUNAI_HOST", "127.0.0.1"), int(os.environ.get("CHUNAI_PORT", "8787"))
-    print(f"ChunAI Web: http://{host}:{port}  | token: {token if generated else '(dari CHUNAI_WEB_TOKEN di .env)'}", flush=True)
+    off = auth_off_requested()
+    if off and host not in LOOPBACK:
+        sys.exit("CHUNAI_WEB_AUTH=off hanya boleh dengan alamat 127.0.0.1/localhost. Hapus pengaturan itu atau kembalikan CHUNAI_HOST.")
+    token, generated = resolve_token()
+    app = create_app(mgr, token, auth_off=off)
+    print(f"ChunAI Web: http://{host}:{port}  | " + ("tanpa token (hanya komputer ini)" if off else
+          f"token: {token if generated else '(dari CHUNAI_WEB_TOKEN di .env)'}"), flush=True)
     server = uvicorn.Server(uvicorn.Config(app, host=host, port=port, log_level="warning"))
     tasks = [asyncio.create_task(server.serve())]
     tg, ids = os.environ.get("CHUNAI_TELEGRAM_TOKEN"), allowed_ids_from_env()
