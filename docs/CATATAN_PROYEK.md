@@ -207,3 +207,6 @@ Peringatan sekali per hari pada 80% batas harian; `/lanjut` melonggarkan pagar s
 
 ## 5s. Jalur kunci API (cadangan tanpa langganan) (26 Okt 2026)
 `CHUNAI_AUTH`, `chunai auth-key`, `chunai mode`, `apply_auth_mode`, galat Claude berbahasa Indonesia. Kunci disimpan sebagai CHUNAI_API_KEY (bukan ANTHROPIC_API_KEY) agar tidak terpakai tanpa sengaja. Belum diuji dengan kunci asli; pengguna perlu `chunai doctor --live` setelah beralih. 293 tes.
+
+## 5t. Pengukuran beban awal (26 Okt 2026)
+Perkiraan awal saya (40-50 ribu token) KELIRU; terukur ±29,6 ribu di cloud. Rincian di OPERASIONAL.md. Perintah baru `chunai ukur`. Pelajaran: jangan menyimpulkan penghematan dari angka perkiraan; matikan tool bawaan justru menambah beban (MCP tidak lagi ditunda). Penghematan terbesar tetap pemilah model (Haiku vs Opus 25x), bukan diet prompt (potensi ~10%).

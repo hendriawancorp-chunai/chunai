@@ -77,3 +77,8 @@ tidak tertimpa. Hentikan ChunAI sebelum menyalin dan jalankan ulang sesudahnya.
 - Perintah: `chunai auth-key`, `chunai mode api|langganan`; `chunai doctor` menampilkan jalur aktif.
 - Galat Claude (kuota/saldo/otorisasi/batas sesi) kini diterjemahkan ke saran berbahasa Indonesia (`doctor.explain_error`, dipakai `ChunAI.ask` saat `ResultMessage.is_error`).
 - BELUM diuji dengan kunci API asli (sesi cloud memakai proxy; tidak ada kunci). Yang teruji: logika pemilihan, penyimpanan kunci tanpa dicetak, terjemahan galat. Uji nyata: `chunai mode api` lalu `chunai doctor --live`.
+
+## Beban awal token (diukur 26 Okt 2026, sesi cloud, Haiku, pesan "halo")
+- Penuh: ±29,6 ribu token. Prompt sistem ChunAI sendiri: ±7,4 ribu (±15 ribu karakter). Pengaturan/skill lingkungan cloud: ±2,9 ribu (`setting_sources=[]` menghapusnya). Subagen ±0,3 ribu. 49 tool MCP ChunAI hanya ±0,8 ribu karena CLI menunda definisinya (ToolSearch); bila tool bawaan dimatikan (`tools=[]`) definisi lengkapnya ±12 ribu ikut dimuat, jadi JANGAN mematikan tool bawaan.
+- Sisanya (±18 ribu) = tool bawaan CLI dan lingkungan cloud (banyak tool/skill khusus cloud); di komputer pengguna berbeda. Ukur di sana: `chunai ukur` (3 pesan kecil di Haiku).
+- Mematikan tool bawaan tertentu (`disallowed_tools`) TIDAK mengecilkan beban (diuji). Penghematan terkendali yang tersisa: memecah prompt ChunAI (±7,4 ribu) per topik (potensi ±3-4 ribu) dan `setting_sources=[]` (bila hasil `chunai ukur` pengguna menunjukkan selisih berarti).

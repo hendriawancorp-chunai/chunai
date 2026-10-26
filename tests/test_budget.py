@@ -238,3 +238,9 @@ async def test_ask_turns_claude_errors_into_indonesian_hints(subtype, status, ex
     a.audit = type("A", (), {"record": lambda *x, **k: None})()
     out = "".join([c async for c in a.ask("halo")])
     assert expect in out and "⚠" in out
+
+
+def test_measure_report_breakdown():
+    from chunai.measure import format_report
+    out = format_report([("penuh", 30000), ("tanpa pengaturan", 27000), ("prompt pendek", 22000)])
+    assert "-3000" in out and "-8000" in out and "sekitar 8000 token" in out and "sekitar 3000 token" in out

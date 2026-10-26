@@ -72,7 +72,7 @@ USAGE = """ChunAI
   chunai telegram              bot Telegram (CHUNAI_TELEGRAM_TOKEN, CHUNAI_TELEGRAM_USERS)
   chunai audit [n]             tampilkan n catatan terakhir (perintah, izin, keputusan, biaya)\n  chunai doctor                periksa semua prasyarat (Python, Claude, Chromium, LibreOffice, ...)
   chunai auth                  login Claude; token disimpan otomatis ke .env
-  chunai auth-key              simpan kunci API Claude (cadangan, berbayar per token)\n  chunai mode api|langganan    pilih jalur Claude: kunci API atau langganan\n  chunai setup-telegram        hubungkan bot Telegram (token divalidasi, ID pemilik terdeteksi otomatis)\n  chunai telegram-check        periksa token/ID/webhook Telegram (tanpa menjalankan bot)
+  chunai ukur                  ukur beban awal token per sesi (3 pesan kecil di Haiku)\n  chunai auth-key              simpan kunci API Claude (cadangan, berbayar per token)\n  chunai mode api|langganan    pilih jalur Claude: kunci API atau langganan\n  chunai setup-telegram        hubungkan bot Telegram (token divalidasi, ID pemilik terdeteksi otomatis)\n  chunai telegram-check        periksa token/ID/webhook Telegram (tanpa menjalankan bot)
   chunai serve                 Web + Telegram sekaligus
   chunai login <url>           login manual untuk Web Agent (komputer lokal)\n  chunai cdp-help              panduan + pemeriksaan memakai Chrome sendiri (CDP)"""
 
@@ -281,6 +281,10 @@ def main() -> None:
             run_auth()
         if arg == "savetoken":
             run_savetoken()
+        if arg == "ukur":
+            from .measure import run_measure
+            print(asyncio.run(run_measure()))
+            sys.exit(0)
         if arg == "auth-key":
             run_auth_key()
         if arg == "mode":
