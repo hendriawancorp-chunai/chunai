@@ -223,9 +223,12 @@ class ChunAI:
         if self._client:
             await self._client.interrupt()
 
-    async def ask(self, prompt: str) -> AsyncIterator[str]:
-        """Kirim perintah, hasilkan potongan teks balasan."""
+    async def ask(self, prompt: str, model: str | None = None) -> AsyncIterator[str]:
+        """Kirim perintah, hasilkan potongan teks balasan. `model` mengganti model sesi mulai giliran ini (pemilah model)."""
         assert self._client, "Gunakan 'async with ChunAI(...)'"
+        if model and model != self.model:
+            await self._client.set_model(model)
+            self.model = model
         self.audit.record("user_prompt", prompt=prompt)
         await self._client.query(f"[Konteks waktu: {describe()}]\n{prompt}")
         async for msg in self._client.receive_response():
@@ -240,8 +243,9 @@ class ChunAI:
             elif isinstance(msg, ResultMessage):
                 total = getattr(msg, "total_cost_usd", None)
                 if total is None:
-                    self.audit.record("turn_done", cost_usd=None)
+                    self.audit.record("turn_done", cost_usd=None, model=self.model)
                 else:                                   # SDK memberi TOTAL sesi; catat selisih per giliran
                     delta = total - self._cost_total if total >= self._cost_total else total
                     self._cost_total = total
-                    self.audit.record("turn_done", cost_usd=round(delta, 6), session_total=total)
+                    self.audit.record("turn_done", cost_usd=round(delta, 6), session_total=total, model=self.model,
+                                      served=sorted(getattr(msg, "model_usage", None) or {}))

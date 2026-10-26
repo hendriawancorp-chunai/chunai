@@ -178,6 +178,9 @@ def create_app(manager: SessionManager, token: str | None = None, auth_off: bool
                     text = str(msg.get("text", "")).strip()
                     if not text:
                         continue
+                    if text.split()[0].lower() == "/model":
+                        await sess.channel.send_text(sess.model_command(text.partition(" ")[2]))
+                        continue
                     if sess.start_turn(text):
                         await sess.channel._send({"type": "busy"})
                         asyncio.create_task(watch(sess.task))

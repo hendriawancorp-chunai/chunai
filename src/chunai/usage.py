@@ -6,6 +6,8 @@ import os
 from datetime import date
 from pathlib import Path
 
+from .router import label
+
 
 def daily_limit() -> float:
     """Batas biaya harian (USD). Untuk langganan angka ini 'setara biaya' sebagai pengaman, bukan tagihan. 0 = tanpa batas."""
@@ -61,7 +63,8 @@ def render_audit(base: Path, n: int = 30) -> str:
         elif ev == "denied_by_policy":
             txt = f"DIBLOKIR   {e.get('tool', '')}"
         elif ev == "turn_done":
-            txt = f"SELESAI    biaya setara ${float(e.get('cost_usd') or 0):.3f}"
+            mdl = f" [{label(e['model'])}]" if e.get("model") else ""
+            txt = f"SELESAI{mdl}    biaya setara ${float(e.get('cost_usd') or 0):.3f}"
         elif ev == "tool_use" and e.get("tool", "").endswith("kirim_file"):
             txt = f"KIRIM FILE {e.get('path', '')}"
         else:

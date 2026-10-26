@@ -100,6 +100,12 @@ class Scheduler:
             return
         await self._run_agent(t, title, note)
 
+    @staticmethod
+    def _model_kw(text: str) -> dict:
+        from .. import router
+        m = router.scheduled_model(text)
+        return {"model": m} if m else {}
+
     async def _run_agent(self, t: dict, title: str, note: str):
         msg = self.mgr.budget_message()
         if msg:
@@ -119,7 +125,7 @@ class Scheduler:
                 said: list[str] = []
 
                 async def go():
-                    async for chunk in agent.ask(UNATTENDED + t["isi"]):
+                    async for chunk in agent.ask(UNATTENDED + t["isi"], **self._model_kw(t["isi"])):
                         if chunk.strip():
                             said.append(chunk)
                 await asyncio.wait_for(go(), TASK_TIMEOUT)

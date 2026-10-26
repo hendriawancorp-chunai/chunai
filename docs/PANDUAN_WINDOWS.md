@@ -118,6 +118,7 @@ Opsional: `chunai telegram-check` memastikan token bot dan ID benar.
 ./scripts/run.sh
 ```
 - **Web:** buka `http://localhost:8787` di browser Windows, masukkan token dari `CHUNAI_WEB_TOKEN` di `.env`
+  - **Model otomatis (hemat):** ChunAI memilih model sendiri. Pertanyaan/percakapan singkat memakai Haiku (murah), dokumen/analisis/lampiran memakai Sonnet, tugas web (form, kuis, media sosial) memakai Opus. Balasan singkat seperti "lanjutkan" mengikuti tingkat tugas sebelumnya. Ketik `/model` untuk melihat atau mengubah (`/model otomatis`, `/model ringan`, `/model sedang`, `/model berat`), atau awali satu perintah dengan `!cepat` atau `!teliti`. Tugas terjadwal memakai Haiku (maksimal Sonnet). Untuk mengunci satu model: `CHUNAI_MODEL=claude-sonnet-5-5` di `.env`; untuk mematikan pemilahan: `CHUNAI_MODEL_AUTO=off`.
   - **Tanpa token (opsional):** tambahkan baris `CHUNAI_WEB_AUTH=off` ke `.env`, lalu jalankan ulang. Halaman langsung terbuka tanpa kata sandi, hanya dari komputer ini (alamat selain localhost ditolak). Siapa pun yang memakai komputer/akun Windows Anda dapat memakai ChunAI; kartu izin tetap berlaku.
   (`cat .env | grep WEB`).
 - **Telegram:** kirim `/start` ke bot Anda.

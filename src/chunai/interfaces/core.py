@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import os
 import re
 import secrets
 import time
@@ -11,6 +12,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Awaitable, Callable, Protocol
 
+from .. import router
 from ..approval import ApprovalRequest, ApprovalResult
 from ..timeutil import now
 from ..usage import day_cost, daily_limit
@@ -161,6 +163,9 @@ class Session:
         self.task: asyncio.Task | None = None
         self.lock = asyncio.Lock()
         self.uploads: list[str] = []          # file yang diunggah pengguna, diberitahukan ke agen pada giliran berikutnya
+        self.model_pref: str | None = None    # pilihan /model: None/"otomatis", tingkat (ringan/sedang/berat) atau id model
+        self.last_tier: tuple[str, float] | None = None
+        self.last_model: str | None = None
 
     @property
     def busy(self) -> bool:
@@ -207,7 +212,25 @@ class Session:
         except Exception as e:
             log.warning("pesan tidak terkirim ke chat (%s)", type(e).__name__)
 
-    async def turn(self, text: str):
+    def model_command(self, arg: str) -> str:
+        """Perintah /model: tanpa argumen = tampilkan; otomatis | ringan | sedang | berat | id model claude-..."""
+        arg = arg.strip()
+        if router.fixed_model():
+            return f"Model dikunci oleh CHUNAI_MODEL ({router.fixed_model()}). Hapus pengaturan itu di .env untuk pemilahan otomatis."
+        if arg:
+            v = router.parse_choice(arg)
+            if v is None:
+                return "Pilihan tidak dikenal. Gunakan: /model otomatis | ringan | sedang | berat (atau id model, mis. claude-sonnet-5-5)."
+            self.model_pref = None if v == "otomatis" else v
+        pref = self.model_pref
+        mode = ("otomatis" if router.auto_enabled() else "bawaan (pemilahan mati)") if not pref else \
+            f"{pref} ({router.label(router.model_for(pref))})" if pref in router.TIERS else pref
+        tiers = ", ".join(f"{t}={router.label(router.model_for(t))}" for t in router.TIERS)
+        last = f"\nModel giliran terakhir: {router.label(self.last_model)}" if self.last_model else ""
+        return (f"Mode model: {mode}\nTingkat: {tiers}{last}\n"
+                "Ubah: /model otomatis | ringan | sedang | berat. Satu perintah saja: awali dengan !cepat atau !teliti.")
+
+    async def turn(self, text: str, choice: tuple | None = None):
         ch = self.channel
         assert ch is not None
         async with self.lock:
@@ -215,7 +238,12 @@ class Session:
                 await self.ensure_agent()
                 before = snapshot(self.workdir)
                 said: list[str] = []
-                async for chunk in self.agent.ask(text):
+                model, tier = (choice[0], choice[1]) if choice else (None, None)
+                if tier:
+                    self.last_tier = (tier, time.time())
+                self.last_model = model or self.last_model
+                kw = {"model": model} if model else {}
+                async for chunk in self.agent.ask(text, **kw):
                     if chunk.strip():
                         said.append(chunk)
                         await self._say(ch, chunk)
@@ -245,10 +273,12 @@ class Session:
             if msg:
                 self.task = asyncio.create_task(self._notify(msg))      # tidak menjalankan agen
                 return True
+        choice = router.pick(text, self.model_pref, has_upload=bool(self.uploads), prev=self.last_tier)
+        text = choice[3]
         if self.uploads:
             text = "File yang diunggah pengguna (di workspace): " + ", ".join(self.uploads) + "\n\n" + text
             self.uploads = []
-        self.task = asyncio.create_task(self.turn(text))
+        self.task = asyncio.create_task(self.turn(text, choice))
         return True
 
 
@@ -295,5 +325,6 @@ def default_agent_factory(max_budget_usd: float = 5.0):
 
     def factory(reviewer, workdir):
         return ChunAI(reviewer, workdir=workdir, audit_path=Path(workdir).parent / "audit.jsonl",
-                      web=load_web_config(), max_budget_usd=max_budget_usd)
+                      web=load_web_config(), max_budget_usd=max_budget_usd,
+                      model=os.environ.get("CHUNAI_MODEL") or None)
     return factory

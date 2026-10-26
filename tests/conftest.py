@@ -20,7 +20,7 @@ class FakeAgent:
     async def interrupt(self):
         pass
 
-    async def ask(self, prompt):
+    async def ask(self, prompt, model=None):
         FakeAgent.last_prompts.append(prompt)
         if "tunggu" in prompt:
             import asyncio

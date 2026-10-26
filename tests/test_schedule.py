@@ -80,7 +80,7 @@ class FakeAgent:
     async def __aenter__(self): return self
     async def __aexit__(self, *a): ...
 
-    async def ask(self, prompt):
+    async def ask(self, prompt, model=None):
         assert "TUGAS TERJADWAL" in prompt
         r = await self.reviewer(type("R", (), {"tool": "mcp__chunai__kirim_form", "input": {}, "summary": ""})())
         assert isinstance(r, ApprovalResult) and not r.approved
@@ -153,7 +153,7 @@ async def test_budget_limit_blocks_agent_task(tmp_path):
 
 async def test_agent_failure_reported_not_raised(tmp_path):
     class Boom(FakeAgent):
-        async def ask(self, prompt):
+        async def ask(self, prompt, model=None):
             raise RuntimeError("putus")
             yield ""
     clock = [at(2026, 10, 19, 7, 0)]

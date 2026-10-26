@@ -65,3 +65,9 @@ tidak tertimpa. Hentikan ChunAI sebelum menyalin dan jalankan ulang sesudahnya.
 - **Telegram:** di @BotFather `/revoke` pada bot, lalu `chunai setup-telegram`.
 - **Web:** ganti nilai `CHUNAI_WEB_TOKEN` di `.env` dengan teks acak panjang, jalankan ulang.
 - **Web tanpa token:** `CHUNAI_WEB_AUTH=off` (opt-in). Hanya jalan di 127.0.0.1; server menolak start bila `CHUNAI_HOST` bukan localhost. Pengaman: validasi Host (anti DNS rebinding), Origin/Sec-Fetch-Site (anti CSRF/WebSocket lintas situs), unduhan tetap bertanda tangan dengan kunci acak per-proses. Risiko: proses lain di komputer yang sama bisa memakai ChunAI.
+
+## Pemilah model (hemat biaya)
+- Kode: `src/chunai/router.py` (aturan kata kunci, tanpa panggilan LLM tambahan). Tingkat: ringan=Haiku, sedang=Sonnet, berat=Opus; id model dapat diganti dengan `CHUNAI_MODEL_RINGAN/SEDANG/BERAT`.
+- Aturan keras: tugas web/aksi tidak pernah ke Haiku. Pengaman (kartu izin, allowlist, sandbox) tidak bergantung pada model.
+- Pengaturan: `/model` (Telegram dan Web), awalan `!cepat`/`!teliti`, `CHUNAI_MODEL` (kunci satu model), `CHUNAI_MODEL_AUTO=off`.
+- `chunai audit` menampilkan model tiap giliran (`SELESAI [Haiku] ...`). Catatan: tiap model punya cache sendiri; pemakaian pertama sebuah model dalam sesi lebih mahal (uji: Sonnet giliran pertama ±$0,12, lalu Haiku ±$0,002-0,006).
