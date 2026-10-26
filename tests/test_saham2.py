@@ -199,9 +199,12 @@ async def test_periksa_analisis_tool_uses_session_registry(tmp_path):
     A = {t.name: t for t in analysis_tools(ws, reg)}
     a = txt(await S["analisis_teknikal"].handler({"kode": "TLKM"}))
     price = store.load_prices("TLKM")["close"].iloc[-1]
-    (ws / "lap.md").write_text(GOOD.replace("2.490", f"{price:,.0f}".replace(",", ".")).replace("60,3", "999,9"))
+    # angka asing dipilih yang pasti tidak ada di registri (keluaran tool memuat umur data dari tanggal hari ini)
+    from chunai.saham import lint as L
+    foreign = next(x for x in ("999,9", "7.654,3", "31.337,5") if L.untraced(x, L.registry_values(reg)))
+    (ws / "lap.md").write_text(GOOD.replace("2.490", f"{price:,.0f}".replace(",", ".")).replace("60,3", foreign))
     r = await A["periksa_analisis"].handler({"path": "lap.md"})
-    assert "LOLOS" in txt(r) and "999,9" in txt(r)                      # lolos tetapi angka asing diperingatkan
+    assert "LOLOS" in txt(r) and foreign in txt(r)                      # lolos tetapi angka asing diperingatkan
     assert str(int(price)) in a.replace(".", "") or True
     (ws / "buruk.md").write_text("Pasti naik! Beli.")
     assert "PERLU PERBAIKAN" in txt(await A["periksa_analisis"].handler({"path": "buruk.md"}))

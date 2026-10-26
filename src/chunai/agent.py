@@ -26,6 +26,7 @@ class ChunAI:
         self.workdir = Path(workdir).resolve()
         self.workdir.mkdir(parents=True, exist_ok=True)
         self.audit = AuditLog(audit_path)
+        self._cost_total = 0.0
         self.gate = ApprovalGate(reviewer=reviewer, audit=self.audit)
         self.web = WebSession(web, self.workdir) if web else None
         if web:
@@ -237,4 +238,10 @@ class ChunAI:
                             {"query": str(block.input.get("query", ""))[:120]} if block.name == "WebSearch" else {}
                         self.audit.record("tool_use", tool=block.name, **extra)
             elif isinstance(msg, ResultMessage):
-                self.audit.record("turn_done", cost_usd=getattr(msg, "total_cost_usd", None))
+                total = getattr(msg, "total_cost_usd", None)
+                if total is None:
+                    self.audit.record("turn_done", cost_usd=None)
+                else:                                   # SDK memberi TOTAL sesi; catat selisih per giliran
+                    delta = total - self._cost_total if total >= self._cost_total else total
+                    self._cost_total = total
+                    self.audit.record("turn_done", cost_usd=round(delta, 6), session_total=total)

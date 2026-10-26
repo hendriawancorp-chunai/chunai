@@ -195,3 +195,6 @@ Di sesi cloud: tambahkan repo (`hendriawancorp-chunai/chunai`), clone, `pip inst
 
 ## 5o. Web tanpa token (22 Okt 2026)
 Permintaan pengguna: akses Web tanpa token. Dibuat opt-in `CHUNAI_WEB_AUTH=off` (default tetap wajib token). Hanya loopback (serve menolak host lain), middleware `local_request_ok` (Host loopback, Origin==Host, Sec-Fetch-Site same-origin/none), `/config` memberi tahu UI agar langsung connect, kunci penandatangan unduhan acak. Approval gate tidak berubah. 262 tes.
+
+## 5p. Biaya harian terhitung berlipat (26 Okt 2026)
+Temuan dari `chunai audit` pengguna: biaya "halo" naik terus (0,105 → 0,406). Penyebab: `ResultMessage.total_cost_usd` dari SDK adalah TOTAL BERJALAN per sesi, tetapi `turn_done` mencatatnya sebagai biaya per giliran dan `day_cost` menjumlahkannya, sehingga batas harian tercapai jauh lebih cepat dari pemakaian nyata. Perbaikan: `agent.py` mencatat selisih per giliran (+ `session_total`); `usage._events` menormalkan catatan lama (tanpa `session_total`) dengan selisih antar giliran. Pelajaran: verifikasi arti angka dari SDK sebelum dijumlahkan. Juga: `test_periksa_analisis_tool_uses_session_registry` bergantung tanggal (angka asing 999,9 bertabrakan dengan umur data); kini memilih angka yang pasti asing. Rencana berikutnya (menunggu persetujuan): pemilahan model otomatis + `/model` + `CHUNAI_MODEL`.

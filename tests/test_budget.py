@@ -111,3 +111,20 @@ def test_backup_script_excludes_secrets_and_rotates(tmp_path):
     arc = next(dest.glob("chunai-*.tar.gz"))
     names = subprocess.run(["tar", "-tzf", str(arc)], capture_output=True, text=True).stdout
     assert "k.docx" in names and "RAHASIA" not in names and "browser_profile" not in names and ".tmp" not in names and ".env" not in names
+
+
+def test_old_cumulative_costs_become_per_turn(tmp_path):
+    today = date.today().isoformat()
+    # catatan lama: total berjalan sesi (0.1, 0.3, 0.6) lalu sesi baru (0.2)
+    write_audit(tmp_path, "web", [{"ts": f"{today}T0{i}:00:00+07:00", "event": "turn_done", "cost_usd": c}
+                                  for i, c in enumerate([0.1, 0.3, 0.6, 0.2], 1)])
+    assert day_cost(tmp_path, date.fromisoformat(today)) == 0.8       # 0.1+0.2+0.3+0.2, bukan 1.2
+
+
+def test_new_records_store_delta_and_session_total(tmp_path):
+    today = date.today().isoformat()
+    write_audit(tmp_path, "web", [
+        {"ts": f"{today}T01:00:00+07:00", "event": "turn_done", "cost_usd": 0.1, "session_total": 0.1},
+        {"ts": f"{today}T02:00:00+07:00", "event": "turn_done", "cost_usd": 0.2, "session_total": 0.3}])
+    assert day_cost(tmp_path, date.fromisoformat(today)) == 0.3
+

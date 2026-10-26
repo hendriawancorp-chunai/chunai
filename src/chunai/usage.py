@@ -16,14 +16,25 @@ def daily_limit() -> float:
 
 
 def _events(base: Path):
+    """Semua kejadian audit. Biaya `turn_done` dinormalkan jadi biaya PER GILIRAN di `cost_usd`.
+    Catatan lama menyimpan total berjalan sesi dari SDK (tanpa `session_total`); selisihnya dihitung di sini."""
     for f in sorted(base.glob("*/audit.jsonl")):
+        prev = 0.0
         try:
             for line in f.read_text(encoding="utf-8").splitlines():
-                if line.strip():
-                    try:
-                        yield json.loads(line)
-                    except ValueError:
-                        continue
+                if not line.strip():
+                    continue
+                try:
+                    e = json.loads(line)
+                except ValueError:
+                    continue
+                if e.get("event") == "turn_done" and e.get("cost_usd") is not None:
+                    c = float(e["cost_usd"])
+                    if "session_total" in e:
+                        prev = float(e["session_total"])
+                    else:
+                        e["cost_usd"], prev = (c - prev if c >= prev else c), c
+                yield e
         except OSError:
             continue
 
