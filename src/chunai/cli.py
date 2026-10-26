@@ -72,7 +72,7 @@ USAGE = """ChunAI
   chunai telegram              bot Telegram (CHUNAI_TELEGRAM_TOKEN, CHUNAI_TELEGRAM_USERS)
   chunai audit [n]             tampilkan n catatan terakhir (perintah, izin, keputusan, biaya)\n  chunai doctor                periksa semua prasyarat (Python, Claude, Chromium, LibreOffice, ...)
   chunai auth                  login Claude; token disimpan otomatis ke .env
-  chunai setup-telegram        hubungkan bot Telegram (token divalidasi, ID pemilik terdeteksi otomatis)\n  chunai telegram-check        periksa token/ID/webhook Telegram (tanpa menjalankan bot)
+  chunai auth-key              simpan kunci API Claude (cadangan, berbayar per token)\n  chunai mode api|langganan    pilih jalur Claude: kunci API atau langganan\n  chunai setup-telegram        hubungkan bot Telegram (token divalidasi, ID pemilik terdeteksi otomatis)\n  chunai telegram-check        periksa token/ID/webhook Telegram (tanpa menjalankan bot)
   chunai serve                 Web + Telegram sekaligus
   chunai login <url>           login manual untuk Web Agent (komputer lokal)\n  chunai cdp-help              panduan + pemeriksaan memakai Chrome sendiri (CDP)"""
 
@@ -223,6 +223,37 @@ def run_savetoken() -> None:
     print(f"✅ Tersimpan di {f} ({token_shape(tok)})")
 
 
+def run_auth_key() -> None:
+    """Simpan kunci API Claude (cadangan, berbayar per token) ke .env sebagai CHUNAI_API_KEY. Kunci tidak pernah dicetak."""
+    import getpass
+
+    from .envfile import env_path, save_env_var
+    print("Kunci API Claude (dari console.anthropic.com, berbayar per token). Tempel lalu Enter; layar tidak menampilkan isinya.")
+    key = getpass.getpass("Kunci API: ").strip().strip("\"'")
+    if key.startswith("sk-ant-oat"):
+        sys.exit("Itu token langganan, bukan kunci API. Untuk token langganan gunakan: chunai auth")
+    if not key.startswith("sk-ant-") or len(key) < 40 or any(ch.isspace() for ch in key):
+        sys.exit("Kunci tidak dikenali (harus diawali sk-ant-, tanpa spasi). Tidak ada yang disimpan.")
+    f = save_env_var("CHUNAI_API_KEY", key, env_path())
+    print(f"✅ Kunci API tersimpan di {f} (panjang {len(key)}). Belum dipakai: ChunAI tetap memakai langganan.\n"
+          "Untuk beralih ke kunci API: chunai mode api   |   kembali ke langganan: chunai mode langganan")
+    sys.exit(0)
+
+
+def run_mode() -> None:
+    from .envfile import env_path, save_env_var
+    arg = (sys.argv[2] if len(sys.argv) > 2 else "").lower()
+    if arg not in ("api", "langganan"):
+        cur = os.environ.get("CHUNAI_AUTH", "langganan")
+        sys.exit(f"Mode saat ini: {cur}. Ubah: chunai mode api | chunai mode langganan")
+    if arg == "api" and not (os.environ.get("CHUNAI_API_KEY") or os.environ.get("ANTHROPIC_API_KEY")):
+        sys.exit("Belum ada kunci API. Jalankan dulu: chunai auth-key")
+    f = save_env_var("CHUNAI_AUTH", arg, env_path())
+    print(f"✅ Mode {arg} disimpan di {f}. Jalankan ulang ChunAI (./scripts/run.sh) agar berlaku." +
+          (" Perhatian: pemakaian ditagih per token ke akun Anthropic Anda." if arg == "api" else ""))
+    sys.exit(0)
+
+
 def run_doctor() -> None:
     from .doctor import live_auth_check, render, run_checks
     checks = run_checks()
@@ -240,6 +271,8 @@ def run_doctor() -> None:
 def main() -> None:
     from .envfile import load_env
     load_env()
+    from .envfile import apply_auth_mode
+    apply_auth_mode()
     try:
         arg = sys.argv[1] if len(sys.argv) > 1 else ""
         if arg == "doctor":
@@ -248,6 +281,10 @@ def main() -> None:
             run_auth()
         if arg == "savetoken":
             run_savetoken()
+        if arg == "auth-key":
+            run_auth_key()
+        if arg == "mode":
+            run_mode()
         if arg == "cdp-help":
             from .cdp import help_text
             print(help_text())

@@ -109,6 +109,13 @@ def run_checks() -> list[Check]:
     how = f"token langganan ({token_shape(os.environ['CLAUDE_CODE_OAUTH_TOKEN'])})" if has_oauth else \
         "ANTHROPIC_API_KEY" if has_key else "login Claude di ~/.claude" if has_login else ""
     c.append(Check("Otentikasi Claude", bool(how), how or "tidak terdeteksi. Jalankan: chunai auth (lalu simpan token di .env). Yakin sudah login? Uji nyata: chunai doctor --live"))
+    mode = os.environ.get("CHUNAI_AUTH", "langganan").strip().lower()
+    spare = bool(os.environ.get("CHUNAI_API_KEY"))
+    if mode in ("api", "kunci", "apikey"):
+        c.append(Check("Jalur Claude", has_key, "kunci API (berbayar per token; batasi lewat CHUNAI_DAILY_BUDGET_USD)" if has_key else
+                       "CHUNAI_AUTH=api tetapi kunci belum ada. Jalankan: chunai auth-key", critical=False))
+    elif spare:
+        c.append(Check("Jalur Claude", True, "langganan; kunci API cadangan tersimpan (beralih: chunai mode api)", critical=False))
     if has_oauth and has_key:
         c.append(Check("Otentikasi ganda", False, "ANTHROPIC_API_KEY dan CLAUDE_CODE_OAUTH_TOKEN sama-sama ada; "
                        "kunci API akan dipakai (berbayar). Hapus salah satunya di .env.", critical=False))
@@ -155,11 +162,13 @@ def explain_error(text: str, status: int | None = None, kind: str | None = None)
     """Terjemahkan galat Claude ke saran perbaikan dalam bahasa Indonesia."""
     t = f"{text} {kind or ''}".lower()
     if status == 401 or any(k in t for k in ("invalid api key", "authentication", "oauth", "unauthorized", "/login", "invalid x-api-key", "token")):
-        return "login/token ditolak. Buat token baru: chunai auth, tempel ke .env (CLAUDE_CODE_OAUTH_TOKEN=...), tanpa spasi/kutip"
+        return ("login/token ditolak (langganan berakhir atau token salah). Langganan: chunai auth. Kunci API: chunai auth-key. "
+                "Uji: chunai doctor --live")
     if status == 402 or "credit" in t or "billing" in t:
-        return "saldo/kredit API tidak cukup. Periksa penagihan di console.anthropic.com"
+        return "saldo/kredit API tidak cukup. Isi saldo di console.anthropic.com, atau kembali ke langganan: chunai mode langganan"
     if status == 429 or "rate" in t or "usage limit" in t or "limit reached" in t:
-        return "batas pemakaian langganan/API tercapai. Tunggu reset atau periksa paket Anda"
+        return ("batas pemakaian Claude tercapai. Langganan: tunggu kuota pulih (atau beralih ke kunci API: chunai mode api). "
+                "API: batas laju/saldo; coba lagi sebentar atau periksa console.anthropic.com")
     if status == 403 or "forbidden" in t or "permission" in t:
         return "akses ditolak untuk akun ini (periksa paket Pro/Max aktif)"
     if "overloaded" in t or (status or 0) >= 500:

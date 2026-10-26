@@ -71,3 +71,9 @@ tidak tertimpa. Hentikan ChunAI sebelum menyalin dan jalankan ulang sesudahnya.
 - Aturan keras: tugas web/aksi tidak pernah ke Haiku. Pengaman (kartu izin, allowlist, sandbox) tidak bergantung pada model.
 - Pengaturan: `/model` (Telegram dan Web), awalan `!cepat`/`!teliti`, `CHUNAI_MODEL` (kunci satu model), `CHUNAI_MODEL_AUTO=off`.
 - `chunai audit` menampilkan model tiap giliran (`SELESAI [Haiku] ...`). Catatan: tiap model punya cache sendiri; pemakaian pertama sebuah model dalam sesi lebih mahal (uji: Sonnet giliran pertama ±$0,12, lalu Haiku ±$0,002-0,006).
+
+## Jalur Claude: langganan atau kunci API
+- `CHUNAI_AUTH=langganan` (bawaan): `CLAUDE_CODE_OAUTH_TOKEN`; `ANTHROPIC_API_KEY` dibuang dari lingkungan proses bila token langganan ada. `CHUNAI_AUTH=api`: kunci dari `CHUNAI_API_KEY` (atau `ANTHROPIC_API_KEY`), token langganan dibuang. Logika: `envfile.apply_auth_mode`, dipanggil di `cli.main` setelah `load_env`.
+- Perintah: `chunai auth-key`, `chunai mode api|langganan`; `chunai doctor` menampilkan jalur aktif.
+- Galat Claude (kuota/saldo/otorisasi/batas sesi) kini diterjemahkan ke saran berbahasa Indonesia (`doctor.explain_error`, dipakai `ChunAI.ask` saat `ResultMessage.is_error`).
+- BELUM diuji dengan kunci API asli (sesi cloud memakai proxy; tidak ada kunci). Yang teruji: logika pemilihan, penyimpanan kunci tanpa dicetak, terjemahan galat. Uji nyata: `chunai mode api` lalu `chunai doctor --live`.

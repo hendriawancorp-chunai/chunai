@@ -67,3 +67,22 @@ def save_env_var(key: str, value: str, path: str | Path | None = None) -> Path:
         tmp.chmod(0o600)
     tmp.replace(f)
     return f
+
+
+def apply_auth_mode(environ=None) -> str:
+    """Pilih jalur otentikasi Claude secara deterministik (dipanggil setelah load_env).
+    CHUNAI_AUTH=langganan (bawaan): pakai token langganan; ANTHROPIC_API_KEY diabaikan agar tidak tertagih tanpa sengaja.
+    CHUNAI_AUTH=api: pakai kunci API (CHUNAI_API_KEY atau ANTHROPIC_API_KEY, berbayar per token); token langganan diabaikan.
+    Mengembalikan 'langganan', 'api', atau 'api-tanpa-kunci' (mode api tetapi kunci belum ada)."""
+    env = os.environ if environ is None else environ
+    mode = env.get("CHUNAI_AUTH", "langganan").strip().lower()
+    if mode in ("api", "kunci", "apikey"):
+        key = env.get("CHUNAI_API_KEY") or env.get("ANTHROPIC_API_KEY") or ""
+        if not key:
+            return "api-tanpa-kunci"
+        env["ANTHROPIC_API_KEY"] = key
+        env.pop("CLAUDE_CODE_OAUTH_TOKEN", None)
+        return "api"
+    if env.get("CLAUDE_CODE_OAUTH_TOKEN"):
+        env.pop("ANTHROPIC_API_KEY", None)
+    return "langganan"

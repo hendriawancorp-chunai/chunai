@@ -204,3 +204,6 @@ Temuan dari `chunai audit` pengguna: biaya "halo" naik terus (0,105 → 0,406). 
 
 ## 5r. Pagar lunak (26 Okt 2026)
 Peringatan sekali per hari pada 80% batas harian; `/lanjut` melonggarkan pagar sampai besok (`SessionManager.allow_today`); `CHUNAI_SESSION_BUDGET_USD` untuk batas per sesi (bawaan 5, 0 = tanpa batas; sebelumnya tertanam 5.0); doctor menampilkan keduanya. Penjadwal tetap memakai batas 1.0 per tugas.
+
+## 5s. Jalur kunci API (cadangan tanpa langganan) (26 Okt 2026)
+`CHUNAI_AUTH`, `chunai auth-key`, `chunai mode`, `apply_auth_mode`, galat Claude berbahasa Indonesia. Kunci disimpan sebagai CHUNAI_API_KEY (bukan ANTHROPIC_API_KEY) agar tidak terpakai tanpa sengaja. Belum diuji dengan kunci asli; pengguna perlu `chunai doctor --live` setelah beralih. 293 tes.

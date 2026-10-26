@@ -1,4 +1,5 @@
 import asyncio
+import pytest
 import json
 import subprocess
 from datetime import date, datetime
@@ -165,3 +166,75 @@ def test_session_limit_env(monkeypatch):
 def test_session_continue_command(tmp_path, fake_factory):
     mgr = SessionManager(fake_factory, tmp_path, daily_budget=10)
     assert "dilonggarkan" in mgr.get("web").continue_command()
+
+
+def test_apply_auth_mode_subscription_ignores_api_key():
+    from chunai.envfile import apply_auth_mode
+    env = {"CLAUDE_CODE_OAUTH_TOKEN": "sk-ant-oat-x", "ANTHROPIC_API_KEY": "sk-ant-api-y", "CHUNAI_API_KEY": "sk-ant-api-y"}
+    assert apply_auth_mode(env) == "langganan"
+    assert "ANTHROPIC_API_KEY" not in env and env["CLAUDE_CODE_OAUTH_TOKEN"]
+    only_key = {"ANTHROPIC_API_KEY": "sk-ant-api-y"}
+    assert apply_auth_mode(only_key) == "langganan" and only_key["ANTHROPIC_API_KEY"]   # tanpa token langganan: jangan dibuang
+
+
+def test_apply_auth_mode_api_uses_spare_key_and_drops_oauth():
+    from chunai.envfile import apply_auth_mode
+    env = {"CHUNAI_AUTH": "api", "CLAUDE_CODE_OAUTH_TOKEN": "sk-ant-oat-x", "CHUNAI_API_KEY": "sk-ant-api-z"}
+    assert apply_auth_mode(env) == "api"
+    assert env["ANTHROPIC_API_KEY"] == "sk-ant-api-z" and "CLAUDE_CODE_OAUTH_TOKEN" not in env
+    assert apply_auth_mode({"CHUNAI_AUTH": "api"}) == "api-tanpa-kunci"
+
+
+def test_cli_auth_key_saves_without_printing(tmp_path, monkeypatch, capsys):
+    import getpass
+
+    from chunai import cli
+    env = tmp_path / ".env"
+    monkeypatch.setenv("CHUNAI_ENV_FILE", str(env))
+    secret = "sk-ant-api03-" + "a" * 50
+    monkeypatch.setattr(getpass, "getpass", lambda *_: secret)
+    with pytest.raises(SystemExit) as e:
+        cli.run_auth_key()
+    assert e.value.code == 0
+    out = capsys.readouterr().out
+    assert secret not in out and "CHUNAI_API_KEY=" + secret in env.read_text()
+    monkeypatch.setattr(getpass, "getpass", lambda *_: "sk-ant-oat01-" + "b" * 50)
+    with pytest.raises(SystemExit) as e2:
+        cli.run_auth_key()
+    assert "token langganan" in str(e2.value)
+
+
+def test_cli_mode_requires_key(tmp_path, monkeypatch):
+    from chunai import cli
+    monkeypatch.setenv("CHUNAI_ENV_FILE", str(tmp_path / ".env"))
+    monkeypatch.delenv("CHUNAI_API_KEY", raising=False); monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    monkeypatch.setattr("sys.argv", ["chunai", "mode", "api"])
+    with pytest.raises(SystemExit) as e:
+        cli.run_mode()
+    assert "auth-key" in str(e.value)
+
+
+def test_explain_error_mentions_both_paths():
+    from chunai.doctor import explain_error
+    assert "auth-key" in explain_error("unauthorized", 401)
+    assert "kuota" in explain_error("usage limit reached", 429)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("subtype,status,expect", [("error_max_budget_usd", None, "CHUNAI_SESSION_BUDGET_USD"), ("error_status", 429, "kuota")])
+async def test_ask_turns_claude_errors_into_indonesian_hints(subtype, status, expect, tmp_path):
+    from claude_agent_sdk import ResultMessage
+
+    from chunai.agent import ChunAI
+
+    class FakeClient:
+        async def query(self, *_): ...
+        async def receive_response(self):
+            yield ResultMessage(subtype=subtype, duration_ms=1, duration_api_ms=1, is_error=True, num_turns=1, session_id="s",
+                                total_cost_usd=0.0, result="usage limit reached", api_error_status=status)
+
+    a = ChunAI.__new__(ChunAI)
+    a._client, a.model, a._cost_total = FakeClient(), None, 0.0
+    a.audit = type("A", (), {"record": lambda *x, **k: None})()
+    out = "".join([c async for c in a.ask("halo")])
+    assert expect in out and "⚠" in out

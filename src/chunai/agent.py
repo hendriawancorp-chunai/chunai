@@ -241,6 +241,14 @@ class ChunAI:
                             {"query": str(block.input.get("query", ""))[:120]} if block.name == "WebSearch" else {}
                         self.audit.record("tool_use", tool=block.name, **extra)
             elif isinstance(msg, ResultMessage):
+                if getattr(msg, "is_error", False):
+                    from .doctor import explain_error
+                    raw = str(getattr(msg, "result", "") or "")[:200]
+                    if getattr(msg, "subtype", "") == "error_max_budget_usd":
+                        yield ("⚠ Batas biaya per sesi tercapai. Kirim /reset untuk sesi baru, atau naikkan CHUNAI_SESSION_BUDGET_USD di .env "
+                               "(0 = tanpa batas) lalu jalankan ulang ChunAI.")
+                    else:
+                        yield f"⚠ Claude menolak atau gagal menjalankan permintaan: {explain_error(raw, getattr(msg, 'api_error_status', None))}" + (f"\n(Pesan asli: {raw})" if raw else "")
                 total = getattr(msg, "total_cost_usd", None)
                 if total is None:
                     self.audit.record("turn_done", cost_usd=None, model=self.model)
