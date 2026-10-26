@@ -15,7 +15,7 @@ from typing import Awaitable, Callable, Protocol
 from .. import router
 from ..approval import ApprovalRequest, ApprovalResult
 from ..timeutil import now
-from ..usage import day_cost, daily_limit
+from ..usage import day_cost, daily_limit, session_limit
 
 log = logging.getLogger(__name__)
 
@@ -151,9 +151,11 @@ def save_upload(workdir: Path, name: str, data: bytes) -> Path:
 class Session:
     """Satu percakapan ChunAI untuk satu pengguna."""
 
-    def __init__(self, key: str, workdir: Path, agent_factory, approval_timeout: float = 600, budget_guard=None):
+    def __init__(self, key: str, workdir: Path, agent_factory, approval_timeout: float = 600, budget_guard=None,
+                 budget_ctl=None):
         self.key, self.workdir = key, workdir
         self.budget_guard = budget_guard                  # callable -> str|None (pesan bila batas harian tercapai)
+        self.budget_ctl = budget_ctl                      # SessionManager: peringatan 80% dan /lanjut
         self.workdir.mkdir(parents=True, exist_ok=True)
         self._factory = agent_factory
         self.channel: Channel | None = None
@@ -212,6 +214,9 @@ class Session:
         except Exception as e:
             log.warning("pesan tidak terkirim ke chat (%s)", type(e).__name__)
 
+    def continue_command(self) -> str:
+        return self.budget_ctl.allow_today() if self.budget_ctl else "Tidak ada batas harian yang aktif."
+
     def model_command(self, arg: str) -> str:
         """Perintah /model: tanpa argumen = tampilkan; otomatis | ringan | sedang | berat | id model claude-..."""
         arg = arg.strip()
@@ -238,6 +243,9 @@ class Session:
                 await self.ensure_agent()
                 before = snapshot(self.workdir)
                 said: list[str] = []
+                warn = self.budget_ctl.budget_warning() if self.budget_ctl else None
+                if warn:
+                    await self._say(ch, warn)
                 model, tier = (choice[0], choice[1]) if choice else (None, None)
                 if tier:
                     self.last_tier = (tier, time.time())
@@ -289,24 +297,43 @@ class SessionManager:
         self.timeout = approval_timeout
         self.daily_budget = daily_limit() if daily_budget is None else daily_budget
         self.sessions: dict[str, Session] = {}
+        self._override_day = None          # tanggal ketika pengguna mengirim /lanjut (pagar harian dilonggarkan)
+        self._warned_day = None
+
+    def allow_today(self) -> str:
+        self._override_day = now().date()
+        return ("Batas harian dilonggarkan sampai besok; pemakaian tetap dicatat (chunai audit). "
+                "Perlu diingat, batas yang sebenarnya adalah kuota langganan Claude Anda.")
+
+    def budget_warning(self) -> str | None:
+        """Peringatan sekali per hari saat pemakaian mencapai 80% batas."""
+        lim, today = self.daily_budget, now().date()
+        if not lim or lim <= 0 or self._override_day == today or self._warned_day == today:
+            return None
+        used = self.today_cost()
+        if lim * 0.8 <= used < lim:
+            self._warned_day = today
+            return (f"⚠ Pemakaian hari ini setara ${used:.2f} dari batas ${lim:.2f} (80% tercapai). "
+                    "Tugas masih berjalan. Kirim /lanjut agar tidak terhenti saat batas tercapai.")
+        return None
 
     def today_cost(self) -> float:
         return day_cost(self.base, now().date())
 
     def budget_message(self) -> str | None:
         lim = self.daily_budget
-        if lim and lim > 0:
+        if lim and lim > 0 and self._override_day != now().date():
             used = self.today_cost()
             if used >= lim:
                 return (f"⛔ Batas pemakaian harian tercapai (setara ${used:.2f} dari ${lim:.2f}). Tugas baru tidak dijalankan "
-                        "sampai besok. Untuk menaikkan batas: ubah CHUNAI_DAILY_BUDGET_USD di .env lalu jalankan ulang ChunAI.")
+                        "sampai besok. Kirim /lanjut untuk melanjutkan hari ini, atau naikkan CHUNAI_DAILY_BUDGET_USD di .env (0 = tanpa batas) lalu jalankan ulang ChunAI.")
         return None
 
     def get(self, key: str) -> Session:
         if key not in self.sessions:
             safe = re.sub(r"[^\w-]", "_", key)
             self.sessions[key] = Session(key, self.base / safe / "workspace", self.factory, self.timeout,
-                                         budget_guard=self.budget_message)
+                                         budget_guard=self.budget_message, budget_ctl=self)
         return self.sessions[key]
 
     async def reset(self, key: str):
@@ -319,9 +346,12 @@ class SessionManager:
             await self.reset(k)
 
 
-def default_agent_factory(max_budget_usd: float = 5.0):
+def default_agent_factory(max_budget_usd: float | None = ...):
     from ..agent import ChunAI
     from ..config import load_web_config
+
+    if max_budget_usd is ...:
+        max_budget_usd = session_limit()
 
     def factory(reviewer, workdir):
         return ChunAI(reviewer, workdir=workdir, audit_path=Path(workdir).parent / "audit.jsonl",

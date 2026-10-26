@@ -128,3 +128,40 @@ def test_new_records_store_delta_and_session_total(tmp_path):
         {"ts": f"{today}T02:00:00+07:00", "event": "turn_done", "cost_usd": 0.2, "session_total": 0.3}])
     assert day_cost(tmp_path, date.fromisoformat(today)) == 0.3
 
+
+
+def _spend(tmp_path, amount):
+    today = timeutil.now().date().isoformat()
+    write_audit(tmp_path, "tg1", [{"ts": f"{today}T09:00:00+07:00", "event": "turn_done", "cost_usd": amount, "session_total": amount}])
+
+
+def test_warning_at_80_percent_once_then_block_then_lanjut(tmp_path, fake_factory):
+    mgr = SessionManager(fake_factory, tmp_path, daily_budget=10)
+    _spend(tmp_path, 8.5)
+    assert "80%" in mgr.budget_warning()
+    assert mgr.budget_warning() is None                          # hanya sekali per hari
+    assert mgr.budget_message() is None                          # belum mencapai batas
+    _spend(tmp_path, 11)
+    assert "/lanjut" in mgr.budget_message()
+    assert "dilonggarkan" in mgr.allow_today()
+    assert mgr.budget_message() is None                          # setelah /lanjut tidak diblokir hari ini
+
+
+def test_no_warning_below_80_or_unlimited(tmp_path, fake_factory):
+    _spend(tmp_path, 5)
+    assert SessionManager(fake_factory, tmp_path, daily_budget=10).budget_warning() is None
+    assert SessionManager(fake_factory, tmp_path, daily_budget=0).budget_warning() is None
+
+
+def test_session_limit_env(monkeypatch):
+    from chunai.usage import session_limit
+    assert session_limit() == 5.0
+    monkeypatch.setenv("CHUNAI_SESSION_BUDGET_USD", "0")
+    assert session_limit() is None
+    monkeypatch.setenv("CHUNAI_SESSION_BUDGET_USD", "12.5")
+    assert session_limit() == 12.5
+
+
+def test_session_continue_command(tmp_path, fake_factory):
+    mgr = SessionManager(fake_factory, tmp_path, daily_budget=10)
+    assert "dilonggarkan" in mgr.get("web").continue_command()

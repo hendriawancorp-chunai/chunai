@@ -201,3 +201,6 @@ Temuan dari `chunai audit` pengguna: biaya "halo" naik terus (0,105 → 0,406). 
 
 ## 5q. Pemilah model otomatis (26 Okt 2026)
 `router.py` + `Session.start_turn/turn` + `ChunAI.ask(model=)` (SDK `set_model`) + `/model` (Telegram, Web) + penjadwal memakai Haiku. Diuji dengan agen asli: Haiku -> Sonnet -> Haiku dalam satu sesi, model benar-benar berganti (audit `turn_done.model/served`; `served` = semua model yang pernah melayani sesi). Keterbatasan: aturan kata kunci bisa salah memilah (pengguna dapat memaksa `!teliti`); penghematan belum diukur pada pemakaian nyata pengguna (cek `chunai audit` setelah beberapa hari). Belum dibuat: subagen Haiku untuk membaca dokumen panjang (tahap berikutnya).
+
+## 5r. Pagar lunak (26 Okt 2026)
+Peringatan sekali per hari pada 80% batas harian; `/lanjut` melonggarkan pagar sampai besok (`SessionManager.allow_today`); `CHUNAI_SESSION_BUDGET_USD` untuk batas per sesi (bawaan 5, 0 = tanpa batas; sebelumnya tertanam 5.0); doctor menampilkan keduanya. Penjadwal tetap memakai batas 1.0 per tugas.

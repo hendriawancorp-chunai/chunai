@@ -17,6 +17,15 @@ def daily_limit() -> float:
         return 20.0
 
 
+def session_limit() -> float | None:
+    """Batas biaya per sesi agen (USD, setara). CHUNAI_SESSION_BUDGET_USD; 0 = tanpa batas. Bawaan 5."""
+    try:
+        v = float(os.environ.get("CHUNAI_SESSION_BUDGET_USD", "5"))
+    except ValueError:
+        v = 5.0
+    return v if v > 0 else None
+
+
 def _events(base: Path):
     """Semua kejadian audit. Biaya `turn_done` dinormalkan jadi biaya PER GILIRAN di `cost_usd`.
     Catatan lama menyimpan total berjalan sesi dari SDK (tanpa `session_total`); selisihnya dihitung di sini."""

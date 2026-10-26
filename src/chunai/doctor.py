@@ -83,6 +83,9 @@ def security_checks() -> list[Check]:
                        "Jalankan: chunai setup-telegram", critical=False))
     from .usage import daily_limit
     lim = daily_limit()
+    from .usage import session_limit
+    sl = session_limit()
+    c.append(Check("Batas biaya per sesi", True, f"setara ${sl:.0f}/sesi (CHUNAI_SESSION_BUDGET_USD)" if sl else "tanpa batas", critical=False))
     c.append(Check("Batas pemakaian harian", True, f"setara ${lim:.0f}/hari" if lim else "tanpa batas (disarankan mengisi CHUNAI_DAILY_BUDGET_USD)", critical=False))
     return c
 
