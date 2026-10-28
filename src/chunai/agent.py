@@ -1,6 +1,7 @@
 """Orkestrator ChunAI di atas Claude Agent SDK, dengan Approval Gate."""
 from __future__ import annotations
 
+import asyncio
 from pathlib import Path
 from typing import AsyncIterator
 
@@ -19,6 +20,8 @@ from .tools import build_server
 
 
 class ChunAI:
+    DRAIN_TIMEOUT = 20.0      # detik menunggu sisa giliran terputus sebelum sambung ulang
+
     def __init__(self, reviewer: Reviewer, workdir: str | Path = "data/workspace",
                  audit_path: str | Path = "data/audit.jsonl", model: str | None = None,
                  max_budget_usd: float | None = 5.0, web: WebConfig | None = None,
@@ -27,6 +30,7 @@ class ChunAI:
         self.workdir.mkdir(parents=True, exist_ok=True)
         self.audit = AuditLog(audit_path)
         self._cost_total = 0.0
+        self._inflight = False                # True antara query() dan ResultMessage: bila giliran terputus, sisa pesannya masih di aliran
         self.gate = ApprovalGate(reviewer=reviewer, audit=self.audit)
         self.web = WebSession(web, self.workdir) if web else None
         if web:
@@ -223,14 +227,43 @@ class ChunAI:
         if self._client:
             await self._client.interrupt()
 
+    async def _sync_stream(self) -> None:
+        """Giliran sebelumnya terputus (/stop, galat jaringan, batas waktu) sebelum ResultMessage-nya dibaca: sisa pesannya masih
+        antre dan akan terbaca sebagai jawaban pertanyaan BERIKUTNYA (jawaban bergeser satu langkah). Habiskan dulu sampai hasil
+        giliran itu; bila macet, sambungkan ulang (percakapan sebelumnya hilang, tetapi jawaban kembali berurutan)."""
+        if not self._inflight:
+            return
+        try:
+            await self._client.interrupt()
+        except Exception:
+            pass
+
+        async def drain():
+            async for _ in self._client.receive_response():
+                pass
+        try:
+            await asyncio.wait_for(drain(), self.DRAIN_TIMEOUT)
+        except Exception:
+            self.audit.record("stream_reset", reason="giliran sebelumnya tidak selesai dibersihkan")
+            try:
+                await self._client.disconnect()
+            except Exception:
+                pass
+            self._client = ClaudeSDKClient(self._options())
+            await self._client.connect()
+            self._cost_total = 0.0
+        self._inflight = False
+
     async def ask(self, prompt: str, model: str | None = None) -> AsyncIterator[str]:
         """Kirim perintah, hasilkan potongan teks balasan. `model` mengganti model sesi mulai giliran ini (pemilah model)."""
         assert self._client, "Gunakan 'async with ChunAI(...)'"
+        await self._sync_stream()
         if model and model != self.model:
             await self._client.set_model(model)
             self.model = model
         self.audit.record("user_prompt", prompt=prompt)
         await self._client.query(f"[Konteks waktu: {describe()}]\n{prompt}")
+        self._inflight = True
         async for msg in self._client.receive_response():
             if isinstance(msg, AssistantMessage):
                 for block in msg.content:
@@ -241,6 +274,7 @@ class ChunAI:
                             {"query": str(block.input.get("query", ""))[:120]} if block.name == "WebSearch" else {}
                         self.audit.record("tool_use", tool=block.name, **extra)
             elif isinstance(msg, ResultMessage):
+                self._inflight = False
                 if getattr(msg, "is_error", False):
                     from .doctor import explain_error
                     raw = str(getattr(msg, "result", "") or "")[:200]

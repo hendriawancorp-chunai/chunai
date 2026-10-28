@@ -210,3 +210,6 @@ Peringatan sekali per hari pada 80% batas harian; `/lanjut` melonggarkan pagar s
 
 ## 5t. Pengukuran beban awal (26 Okt 2026)
 Perkiraan awal saya (40-50 ribu token) KELIRU; terukur ±29,6 ribu di cloud. Rincian di OPERASIONAL.md. Perintah baru `chunai ukur`. Pelajaran: jangan menyimpulkan penghematan dari angka perkiraan; matikan tool bawaan justru menambah beban (MCP tidak lagi ditunda). Penghematan terbesar tetap pemilah model (Haiku vs Opus 25x), bukan diet prompt (potensi ~10%).
+
+## 5u. Jawaban bergeser satu langkah (28 Okt 2026)
+Gejala: pertanyaan 1 terjawab setelah pertanyaan 2. Direproduksi dengan agen asli: setelah giliran dihentikan (/stop, galat, batas waktu) sebelum `ResultMessage`-nya dibaca, sisa pesan giliran itu tetap antre di aliran SDK; `receive_response()` giliran berikutnya membaca sisa itu, sehingga SETIAP jawaban bergeser satu langkah sampai /reset. Perbaikan: `ChunAI._inflight` + `_sync_stream()` (interrupt, habiskan sampai hasil giliran lama, batas `DRAIN_TIMEOUT` 20 dtk; bila macet, sambung ulang klien dan catat `stream_reset` di audit). Terverifikasi dengan agen asli (Q2=4, Q3=6, Q4=10 setelah stop) dan 2 tes. Pelajaran: setiap `receive_response()` yang tidak dibaca sampai `ResultMessage` meracuni giliran berikutnya.

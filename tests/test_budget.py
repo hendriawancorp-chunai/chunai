@@ -234,7 +234,7 @@ async def test_ask_turns_claude_errors_into_indonesian_hints(subtype, status, ex
                                 total_cost_usd=0.0, result="usage limit reached", api_error_status=status)
 
     a = ChunAI.__new__(ChunAI)
-    a._client, a.model, a._cost_total = FakeClient(), None, 0.0
+    a._client, a.model, a._cost_total, a._inflight = FakeClient(), None, 0.0, False
     a.audit = type("A", (), {"record": lambda *x, **k: None})()
     out = "".join([c async for c in a.ask("halo")])
     assert expect in out and "⚠" in out
@@ -244,3 +244,76 @@ def test_measure_report_breakdown():
     from chunai.measure import format_report
     out = format_report([("penuh", 30000), ("tanpa pengaturan", 27000), ("prompt pendek", 22000)])
     assert "-3000" in out and "-8000" in out and "sekitar 8000 token" in out and "sekitar 3000 token" in out
+
+
+def _result(text="selesai", **kw):
+    from claude_agent_sdk import ResultMessage
+    base = dict(subtype="success", duration_ms=1, duration_api_ms=1, is_error=False, num_turns=1, session_id="s", total_cost_usd=0.0, result=text)
+    base.update(kw)
+    return ResultMessage(**base)
+
+
+def _answer(text):
+    from claude_agent_sdk import AssistantMessage, TextBlock
+    return AssistantMessage(content=[TextBlock(text=text)], model="m")
+
+
+def _agent(client):
+    from chunai.agent import ChunAI
+    a = ChunAI.__new__(ChunAI)
+    a._client, a.model, a._cost_total, a._inflight = client, None, 0.0, False
+    a.audit = type("A", (), {"record": lambda *x, **k: None})()
+    return a
+
+
+@pytest.mark.asyncio
+async def test_aborted_turn_does_not_shift_next_answers():
+    class Client:
+        """Aliran pesan seperti CLI: satu antrean; query() menambah jawaban + hasil, receive_response() berhenti di hasil pertama."""
+        def __init__(self):
+            self.q, self.sent = [], []
+            self.q += [_answer("sisa-Q1"), _result("sisa-Q1")]          # giliran Q1 yang dihentikan, belum dibaca
+        async def interrupt(self): ...
+        async def query(self, text):
+            self.sent.append(text)
+            self.q += [_answer("jawab:" + text.split("\n", 1)[-1]), _result()]
+        async def receive_response(self):
+            while self.q:
+                m = self.q.pop(0)
+                yield m
+                if type(m).__name__ == "ResultMessage":
+                    return
+    c = Client()
+    a = _agent(c)
+    a._inflight = True                                                     # giliran sebelumnya terputus
+    out2 = "".join([x async for x in a.ask("Q2")])
+    out3 = "".join([x async for x in a.ask("Q3")])
+    assert out2 == "jawab:Q2" and out3 == "jawab:Q3"
+    assert a._inflight is False
+
+
+@pytest.mark.asyncio
+async def test_stuck_stream_reconnects_instead_of_hanging(monkeypatch):
+    import chunai.agent as AG
+
+    class Stuck:
+        async def interrupt(self): ...
+        async def receive_response(self):
+            await asyncio.sleep(3600)
+            yield None
+        async def disconnect(self): self.closed = True
+
+    class Fresh:
+        def __init__(self, *_a): self.connected = False
+        async def connect(self): self.connected = True
+        async def query(self, text): ...
+        async def receive_response(self):
+            yield _answer("baru")
+            yield _result()
+    monkeypatch.setattr(AG, "ClaudeSDKClient", Fresh)
+    a = _agent(Stuck())
+    a.DRAIN_TIMEOUT = 0.05
+    a._options = lambda: None
+    a._inflight = True
+    out = "".join([x async for x in a.ask("Q2")])
+    assert out == "baru" and isinstance(a._client, Fresh) and a._client.connected
